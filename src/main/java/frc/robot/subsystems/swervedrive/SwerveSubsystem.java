@@ -32,10 +32,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import org.json.simple.parser.ParseException;
+import org.photonvision.targeting.PhotonPipelineResult;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -54,6 +58,16 @@ public class SwerveSubsystem extends SubsystemBase
    * Swerve drive object.
    */
   private final SwerveDrive swerveDrive;
+
+    /**
+   * Enable vision odometry updates while driving.
+   */
+  private final boolean     visionDriveTest = false;
+ 
+  /**
+   * PhotonVision class to keep an accurate odometry.
+   */
+  private       Vision      vision;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -84,6 +98,14 @@ public class SwerveSubsystem extends SubsystemBase
                                                0.1);
     swerveDrive.setModuleEncoderAutoSynchronize(false,
                                                 1);
+
+    if (visionDriveTest)
+    {
+      setupPhotonVision();
+      // Stop the odometry thread if we are using vision that way we can synchronize updates better.
+      swerveDrive.stopOdometryThread();
+    }
+    setupPathPlanner();
   }
 
   /**
@@ -101,9 +123,22 @@ public class SwerveSubsystem extends SubsystemBase
                                              Rotation2d.fromDegrees(0)));
   }
 
+    /**
+   * Setup the photon vision class.
+   */
+  public void setupPhotonVision()
+  {
+    vision = new Vision(swerveDrive::getPose, swerveDrive.field);
+  }
+
   @Override
   public void periodic()
   {
+    if (visionDriveTest)
+    {
+      swerveDrive.updateOdometry();
+      vision.updatePoseEstimation(swerveDrive);
+    }
   }
 
   @Override
@@ -164,6 +199,30 @@ public class SwerveSubsystem extends SubsystemBase
 
     // IF USING CUSTOM PATHFINDER ADD BEFORE THIS LINE
     PathfindingCommand.warmupCommand().schedule();
+  }
+
+    /**
+   * Aim the robot at the target returned by PhotonVision.
+   *
+   * @return A {@link Command} which will run the alignment.
+   */
+  public Command aimAtTarget(Cameras camera)
+  {
+
+    return run(() -> {
+      Optional<PhotonPipelineResult> resultO = camera.getBestResult();
+      if (resultO.isPresent())
+      {
+        var result = resultO.get();
+        if (result.hasTargets())
+        {
+          drive(getTargetSpeeds(0,
+                                0,
+                                Rotation2d.fromDegrees(result.getBestTarget()
+                                                             .getYaw())));
+        }
+      }
+    });
   }
 
   /**

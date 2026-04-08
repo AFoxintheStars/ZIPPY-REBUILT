@@ -94,7 +94,6 @@ public class RobotContainer
    */
   public RobotContainer()
   {
-    drivebase.setupPathPlanner();
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
 
