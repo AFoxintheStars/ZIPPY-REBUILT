@@ -24,7 +24,7 @@ public static final double ROBOT_MASS = 100 * 0.453592;
 
   public static final class Intake 
 {
-    public static final int MOTOR_ID = 10;
+    public static final int MOTOR_ID = 11;
 
     public static final double INTAKE_SPEED = 0.8;
     public static final double OUTTAKE_SPEED = -0.8;
