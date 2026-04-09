@@ -23,7 +23,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+
+import static edu.wpi.first.units.Units.Meters;
+
 import java.io.File;
 import swervelib.SwerveInputStream;
 
@@ -33,6 +37,8 @@ public class RobotContainer
 
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
+
+  private final SliderSubsystem slider = new SliderSubsystem();
 
   private final SendableChooser<Command> autoChooser;
 
@@ -176,6 +182,10 @@ public class RobotContainer
       driverXbox.back().whileTrue(Commands.none());
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.rightBumper().onTrue(Commands.none());
+      driverXbox.button(1).whileTrue(slider.setHeight(Meters.of(0.15)));
+      driverXbox.button(2).whileTrue(slider.setHeight(Meters.of(0)));
+      driverXbox.button(4).whileTrue(slider.elevCmd(-0.5));
+      driverXbox.button(5).whileTrue(slider.elevCmd(0.5));
     }
 
   }
