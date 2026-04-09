@@ -31,7 +31,8 @@ public class SliderSubsystem extends SubsystemBase
 {
   private final String           motorTelemetryName = "SliderMotor";
   private final String           mechTelemetryName  = "SliderMechanism";
-  private final SparkMax         elevatorMotor      = new SparkMax(2, SparkLowLevel.MotorType.kBrushless);
+  private final SparkMax         leftSliderMotor      = new SparkMax(9, SparkLowLevel.MotorType.kBrushless);
+  private final SparkMax         rightSliderMotor     = new SparkMax(10, SparkLowLevel.MotorType.kBrushless);
 
   private final DCMotor          dcMotor            = DCMotor.getNEO(2);
   private final Distance         gearPitch         = Inches.of(1);
@@ -69,7 +70,7 @@ public class SliderSubsystem extends SubsystemBase
       .withIdleMode(MotorMode.BRAKE)
       .withControlMode(ControlMode.CLOSED_LOOP)
       .withMechanismCircumference(circumference)
-      .withGearing(new MechanismGearing(GearBox.fromReductionStages(3, 4)))
+      .withGearing(new MechanismGearing(GearBox.fromReductionStages(4)))
       .withStatorCurrentLimit(Amps.of(40))
       .withClosedLoopRampRate(Seconds.of(0.25))
       .withOpenLoopRampRate(Seconds.of(0.25))
@@ -79,10 +80,10 @@ public class SliderSubsystem extends SubsystemBase
       .withClosedLoopController(pidController)
       .withFeedforward(sliderFeedforward)
       .withSoftLimit(softLowerLimit, softUpperLimit)
-      .withFollowers(Pair.of(new SparkMax(4, MotorType.kBrushless), false));
+      .withFollowers(Pair.of(rightSliderMotor, false));
 
 
-  private final SmartMotorController motor         = new SparkWrapper(elevatorMotor, dcMotor, motorConfig);
+  private final SmartMotorController motor         = new SparkWrapper(leftSliderMotor, dcMotor, motorConfig);
 
   private       ElevatorConfig       m_config      = new ElevatorConfig(motor)
       .withMass(weight)

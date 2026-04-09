@@ -1,0 +1,16 @@
+===== SWERVE ANGLE ====
+1. Back Left Azimuth
+2. Front Left Azimuth
+3. Front Right Azimuth
+4. Back Right Azimuth
+
+====== SWERVE DRIVE =====
+5. Back Left Drive
+6. Front Left Drive
+7. Front Right Drive
+8. Back Right Drive
+
+===== INTAKE ====
+9. Left Slider
+10. Right Slider
+11. Intake Wheels

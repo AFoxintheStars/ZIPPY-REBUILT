@@ -22,7 +22,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 
@@ -40,7 +42,16 @@ public class RobotContainer
 
   private final SliderSubsystem slider = new SliderSubsystem();
 
+  private final IntakeSubsystem intake = new IntakeSubsystem();
+
   private final SendableChooser<Command> autoChooser;
+
+  private Command rumbleCommand(double strength) {
+  return Commands.startEnd(
+      () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, strength),
+      () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, 0)
+  );
+}
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -117,6 +128,7 @@ public class RobotContainer
     if (autoChooser.getSelected() == null ) {
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(drivebase::zeroGyroWithAlliance));
     }
+
   }
 
   /**
@@ -173,15 +185,20 @@ public class RobotContainer
       driverXbox.x().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
       driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
-      driverXbox.leftBumper().onTrue(Commands.none());
-      driverXbox.rightBumper().onTrue(Commands.none());
     } else
     {
-      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-      driverXbox.start().whileTrue(Commands.none());
-      driverXbox.back().whileTrue(Commands.none());
-      driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().onTrue(Commands.none());
+      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyroWithAlliance)));
+
+      driverXbox.leftBumper().whileTrue(
+          intake.intakeCommand()
+              .alongWith(rumbleCommand(0.2))
+      );
+
+      driverXbox.rightBumper().whileTrue(
+          intake.outtakeCommand()
+              .alongWith(rumbleCommand(0.2))
+      );
+
       driverXbox.button(1).whileTrue(slider.setHeight(Meters.of(0.15)));
       driverXbox.button(2).whileTrue(slider.setHeight(Meters.of(0)));
       driverXbox.button(4).whileTrue(slider.elevCmd(-0.5));
