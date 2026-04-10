@@ -199,10 +199,10 @@ public class RobotContainer
               .alongWith(rumbleCommand(0.2))
       );
 
-      driverXbox.button(1).whileTrue(slider.setHeight(Meters.of(0.15)));
-      driverXbox.button(2).whileTrue(slider.setHeight(Meters.of(0)));
-      driverXbox.button(4).whileTrue(slider.elevCmd(-0.5));
-      driverXbox.button(5).whileTrue(slider.elevCmd(0.5));
+      driverXbox.x().whileTrue(slider.setHeight(Meters.of(0.15)));
+      driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
+      driverXbox.y().whileTrue(slider.sliderCmd(-0.2));
+      driverXbox.a().whileTrue(slider.sliderCmd(0.2));
     }
 
   }

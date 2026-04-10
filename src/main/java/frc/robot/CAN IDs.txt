@@ -14,3 +14,15 @@
 9. Left Slider
 10. Right Slider
 11. Intake Wheels
+
+==== PREFEED ====
+12. Spindexer 
+13. Bottom Feed
+14. Top Feed
+
+==== TURRET ====
+15. Turret Gear
+16. Turret Flywheels
+
+==== SHIFTER ====
+17. Shifter

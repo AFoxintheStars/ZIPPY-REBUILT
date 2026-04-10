@@ -80,7 +80,7 @@ public class SliderSubsystem extends SubsystemBase
       .withClosedLoopController(pidController)
       .withFeedforward(sliderFeedforward)
       .withSoftLimit(softLowerLimit, softUpperLimit)
-      .withFollowers(Pair.of(rightSliderMotor, false));
+      .withFollowers(Pair.of(rightSliderMotor, true));
 
 
   private final SmartMotorController motor         = new SparkWrapper(leftSliderMotor, dcMotor, motorConfig);
@@ -132,7 +132,7 @@ public class SliderSubsystem extends SubsystemBase
               });
   }
 
-  public Command elevCmd(double dutycycle)
+  public Command sliderCmd (double dutycycle)
   {
     return m_slider.set(dutycycle);
   }

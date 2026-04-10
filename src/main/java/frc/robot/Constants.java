@@ -35,6 +35,25 @@ public static final double ROBOT_MASS = 100 * 0.453592;
     public static final boolean INVERTED = false;
   }
 
+  public static final class Prefeed
+  {
+    public static final int LEADER_ID = 12;
+    public static final int FOLLOWER_LEFT_ID = 13;
+    public static final int FOLLOWER_RIGHT_ID = 14;
+
+    public static final boolean LEADER_INVERTED = false;
+    public static final boolean FOLLOWER_LEFT_INVERTED = true;
+    public static final boolean FOLLOWER_RIGHT_INVERTED = false;
+
+    public static final int CURRENT_LIMIT = 40;
+
+    public static final double INTAKE_SPEED = 0.7;
+    public static final double OUTTAKE_SPEED = -0.6;
+
+    public static final double STALL_CURRENT_THRESHOLD = 35.0;
+    public static final double STALL_VELOCITY_THRESHOLD = 100;
+  }
+
   public static class OperatorConstants
   {
     public static final double DEADBAND        = 0.1;
