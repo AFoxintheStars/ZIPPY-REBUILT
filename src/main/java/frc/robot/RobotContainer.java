@@ -14,6 +14,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -28,6 +29,7 @@ import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
 
 import static edu.wpi.first.units.Units.Meters;
@@ -50,6 +52,8 @@ public class RobotContainer
 
   private final TurretRotationSubsystem turret = new TurretRotationSubsystem();
 
+  private final TurretFlywheelSubsystem flywheel = new TurretFlywheelSubsystem();
+
   private final SendableChooser<Command> autoChooser;
 
   private Command rumbleCommand(double strength) {
@@ -57,6 +61,15 @@ public class RobotContainer
       () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, strength),
       () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, 0)
   );
+}
+
+public Command rumblePulse(CommandXboxController controller) {
+    return Commands.runEnd(
+        () -> controller.getHID().setRumble(
+            GenericHID.RumbleType.kBothRumble, 0.4),
+        () -> controller.getHID().setRumble(
+            GenericHID.RumbleType.kBothRumble, 0)
+    ).withTimeout(0.2);
 }
 
   /**
@@ -227,6 +240,15 @@ public class RobotContainer
       
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
+
+      driverXbox.rightTrigger().whileTrue(
+          flywheel.shoot()
+              .alongWith(
+                  prefeed.intake().onlyIf(flywheel::isReadyToShoot),
+                  Commands.waitUntil(flywheel::isReadyToShoot)
+                      .andThen(rumblePulse(driverXbox))
+              )
+      );
     }
 
   }

@@ -7,6 +7,9 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import static edu.wpi.first.units.Units.Amps;
+
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import edu.wpi.first.units.measure.Current;
 import swervelib.math.Matter;
 
@@ -71,6 +74,28 @@ public static final double ROBOT_MASS = 100 * 0.453592;
     public static final double MAX_ANGLE = 90;
 
     public static final double MANUAL_SPEED = 0.1;
+}
+
+public static final class FlywheelConstants 
+{
+
+    public static final int MOTOR_ID = 30;
+
+    public static final boolean INVERTED = false;
+    public static final int CURRENT_LIMIT = 40;
+
+    public static final IdleMode IDLE_MODE = IdleMode.kCoast;
+
+    public static final double kP = 0.0002;
+    public static final double kI = 0.0;
+    public static final double kD = 0.0;
+    public static final double kFF = 0.00017;
+
+    public static final double SHOOT_RPM = 4000;
+
+    public static final double RPM_TOLERANCE = 100;
+    
+    public static final int READY_CYCLES = 5;
 }
 
   public static class OperatorConstants
