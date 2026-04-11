@@ -30,7 +30,7 @@ public static final double ROBOT_MASS = 100 * 0.453592;
     public static final double OUTTAKE_SPEED = -0.8;
     public static final double HOLD_SPEED = 0.1;
 
-    public static final Current CURRENT_LIMIT = Amps.of(30);
+    public static final Current CURRENT_LIMIT = Amps.of(40);
 
     public static final boolean INVERTED = false;
   }
@@ -42,7 +42,7 @@ public static final double ROBOT_MASS = 100 * 0.453592;
     public static final int FOLLOWER_RIGHT_ID = 14;
 
     public static final boolean LEADER_INVERTED = false;
-    public static final boolean FOLLOWER_LEFT_INVERTED = true;
+    public static final boolean FOLLOWER_LEFT_INVERTED = false;
     public static final boolean FOLLOWER_RIGHT_INVERTED = false;
 
     public static final int CURRENT_LIMIT = 40;

@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
+import frc.robot.subsystems.prefeed.PrefeedSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 
 import static edu.wpi.first.units.Units.Meters;
@@ -43,6 +44,8 @@ public class RobotContainer
   private final SliderSubsystem slider = new SliderSubsystem();
 
   private final IntakeSubsystem intake = new IntakeSubsystem();
+
+  private final PrefeedSubsystem prefeed = new PrefeedSubsystem();
 
   private final SendableChooser<Command> autoChooser;
 
@@ -125,6 +128,8 @@ public class RobotContainer
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
+    slider.setDefaultCommand(slider.setHeight(Meters.of(0)));
+
     if (autoChooser.getSelected() == null ) {
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(drivebase::zeroGyroWithAlliance));
     }
@@ -187,22 +192,36 @@ public class RobotContainer
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
     } else
     {
+      
       driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyroWithAlliance)));
 
       driverXbox.leftBumper().whileTrue(
           intake.intakeCommand()
-              .alongWith(rumbleCommand(0.2))
+              .alongWith(rumbleCommand(0.1))
       );
 
       driverXbox.rightBumper().whileTrue(
           intake.outtakeCommand()
-              .alongWith(rumbleCommand(0.2))
+              .alongWith(rumbleCommand(0.1))
+      );
+      
+ 
+      driverXbox.button(8).whileTrue(
+          prefeed.intake()
+              .alongWith(rumbleCommand(0.25))
       );
 
-      driverXbox.x().whileTrue(slider.setHeight(Meters.of(0.15)));
-      driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
-      driverXbox.y().whileTrue(slider.sliderCmd(-0.2));
-      driverXbox.a().whileTrue(slider.sliderCmd(0.2));
+      driverXbox.button(7).whileTrue(
+          prefeed.outtake()
+              .alongWith(rumbleCommand(0.25))
+      );
+
+      
+      // driverXbox.x().whileTrue(slider.setHeight(Meters.of(0.15)));
+      // driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
+      driverXbox.y().whileTrue(slider.set(-0.15));
+      driverXbox.a().whileTrue(slider.set(0.15));
+      
     }
 
   }
