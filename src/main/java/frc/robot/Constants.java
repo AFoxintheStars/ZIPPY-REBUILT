@@ -54,6 +54,25 @@ public static final double ROBOT_MASS = 100 * 0.453592;
     public static final double STALL_VELOCITY_THRESHOLD = 100;
   }
 
+  public static final class TurretConstants 
+  {
+
+    public static final int MOTOR_ID = 15;
+
+    public static final boolean INVERTED = false;
+    public static final int CURRENT_LIMIT = 30;
+
+    // Gear ratio: 200:16
+    public static final double GEAR_RATIO = 12.5;
+
+    public static final double DEGREES_PER_MOTOR_ROTATION = 360.0 / GEAR_RATIO;
+
+    public static final double MIN_ANGLE = -90;
+    public static final double MAX_ANGLE = 90;
+
+    public static final double MANUAL_SPEED = 0.1;
+}
+
   public static class OperatorConstants
   {
     public static final double DEADBAND        = 0.1;

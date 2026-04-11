@@ -28,6 +28,7 @@ import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.turret.TurretRotationSubsystem;
 
 import static edu.wpi.first.units.Units.Meters;
 
@@ -46,6 +47,8 @@ public class RobotContainer
   private final IntakeSubsystem intake = new IntakeSubsystem();
 
   private final PrefeedSubsystem prefeed = new PrefeedSubsystem();
+
+  private final TurretRotationSubsystem turret = new TurretRotationSubsystem();
 
   private final SendableChooser<Command> autoChooser;
 
@@ -219,9 +222,11 @@ public class RobotContainer
       
       // driverXbox.x().whileTrue(slider.setHeight(Meters.of(0.15)));
       // driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
-      driverXbox.y().whileTrue(slider.set(-0.15));
-      driverXbox.a().whileTrue(slider.set(0.15));
+      driverXbox.b().whileTrue(slider.set(-0.15));
+      driverXbox.x().whileTrue(slider.set(0.15));
       
+      driverXbox.povLeft().whileTrue(turret.rotateLeft());
+      driverXbox.povRight().whileTrue(turret.rotateRight());
     }
 
   }
