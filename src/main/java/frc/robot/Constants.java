@@ -19,7 +19,7 @@ public final class Constants
 public static final double ROBOT_MASS = 100 * 0.453592;
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
   public static final double LOOP_TIME  = 0.13;
-  public static final double MAX_SPEED  = Units.feetToMeters(14.5);
+  public static final double MAX_SPEED  = Units.feetToMeters(15);
 
   public static final class DrivebaseConstants
   {
@@ -79,7 +79,7 @@ public static final double ROBOT_MASS = 100 * 0.453592;
 public static final class FlywheelConstants 
 {
 
-    public static final int MOTOR_ID = 30;
+    public static final int MOTOR_ID = 16;
 
     public static final boolean INVERTED = false;
     public static final int CURRENT_LIMIT = 40;
@@ -91,7 +91,7 @@ public static final class FlywheelConstants
     public static final double kD = 0.0;
     public static final double kFF = 0.00017;
 
-    public static final double SHOOT_RPM = 4000;
+    public static final double SHOOT_RPM = 20000;
 
     public static final double RPM_TOLERANCE = 100;
     

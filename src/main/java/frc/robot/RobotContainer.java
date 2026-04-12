@@ -237,6 +237,8 @@ public Command rumblePulse(CommandXboxController controller) {
       // driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
       driverXbox.b().whileTrue(slider.set(-0.15));
       driverXbox.x().whileTrue(slider.set(0.15));
+
+      driverXbox.y().whileTrue(prefeed.intake());
       
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
@@ -260,6 +262,16 @@ public Command rumblePulse(CommandXboxController controller) {
    */
   public Command getAutonomousCommand()
   {
-    return autoChooser.getSelected();
+  Command selected = autoChooser.getSelected();
+
+  if (selected == null) return Commands.none();
+
+  if (selected instanceof com.pathplanner.lib.commands.PathPlannerAuto auto) {
+    return auto.beforeStarting(() ->
+        drivebase.resetOdometry(auto.getStartingPose())
+    );
+  }
+
+  return selected;
   }
 }
