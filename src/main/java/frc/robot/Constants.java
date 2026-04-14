@@ -80,8 +80,10 @@ public static final class FlywheelConstants
 {
 
     public static final int MOTOR_ID = 16;
+    public static final int FOLLOWER_ID = 17;
 
     public static final boolean INVERTED = false;
+    public static final boolean FOLLOWER_INVERTED = false;
     public static final int CURRENT_LIMIT = 40;
 
     public static final IdleMode IDLE_MODE = IdleMode.kCoast;
@@ -89,13 +91,32 @@ public static final class FlywheelConstants
     public static final double kP = 0.0002;
     public static final double kI = 0.0;
     public static final double kD = 0.0;
-    public static final double kFF = 0.00017;
+    public static final double kFF = 0.00018;
 
     public static final double SHOOT_RPM = 20000;
 
     public static final double RPM_TOLERANCE = 100;
+
+    public static final double GEAR_RATIO = 32.0 / 18.0;
     
     public static final int READY_CYCLES = 5;
+}
+
+public static final class HoodConstants {
+    public static final int SERVO_PORT = 0;
+    public static final int ENCODER_PORT = 0;
+
+    public static final double UP_SPEED = 1.0;
+    public static final double DOWN_SPEED = -1.0;
+
+    public static final double MIN_ANGLE = 10.0;
+    public static final double MAX_ANGLE = 70.0;
+
+    public static final double ZERO_OFFSET = 0.0;
+
+    // Optional (only if needed)
+    public static final double DUTY_MIN = 1.0 / 1025.0;
+    public static final double DUTY_MAX = 1024.0 / 1025.0;
 }
 
   public static class OperatorConstants

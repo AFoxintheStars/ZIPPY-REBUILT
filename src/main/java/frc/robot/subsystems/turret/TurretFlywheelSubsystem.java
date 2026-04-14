@@ -8,7 +8,6 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkBase.PersistMode;
 
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.ClosedLoopConfig;
 
 import com.revrobotics.RelativeEncoder;
 
@@ -24,6 +23,9 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
 
     private final SparkMax flywheelMotor =
         new SparkMax(FlywheelConstants.MOTOR_ID, MotorType.kBrushless);
+
+    private final SparkMax follower =
+        new SparkMax(FlywheelConstants.FOLLOWER_ID, MotorType.kBrushless);
 
     private final RelativeEncoder encoder = flywheelMotor.getEncoder();
 
@@ -69,13 +71,22 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters
         );
+
+        follower.configure(
+            new SparkMaxConfig().follow(flywheelMotor, FlywheelConstants.FOLLOWER_INVERTED),
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters
+        );
     }
 
     /* ==================== CONTROL ==================== */
 
-    public void setRPM(double rpm) {
-        targetRPM = rpm;
-        controller.setSetpoint(rpm, ControlType.kVelocity);
+    public void setRPM(double flywheelRPM) {
+        targetRPM = flywheelRPM;
+
+        double motorRPM = flywheelRPM * FlywheelConstants.GEAR_RATIO;
+
+        controller.setSetpoint(motorRPM, ControlType.kVelocity);
     }
 
     public boolean isReadyToShoot() {
@@ -96,7 +107,7 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
     /* ==================== TELEMETRY ==================== */
 
     public double getRPM() {
-        return encoder.getVelocity();
+        return encoder.getVelocity() / FlywheelConstants.GEAR_RATIO;
     }
 
     public double getTargetRPM() {
@@ -145,7 +156,9 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putNumber("Flywheel/RPM", getRPM());
         SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
+        SmartDashboard.putNumber("Flywheel/Error", targetRPM - getRPM());
         SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());
         SmartDashboard.putBoolean("Flywheel/Ready", isReadyToShoot());
+        SmartDashboard.putBoolean("Flywheel/Spinning Up", !isReadyToShoot());
     }
 }
