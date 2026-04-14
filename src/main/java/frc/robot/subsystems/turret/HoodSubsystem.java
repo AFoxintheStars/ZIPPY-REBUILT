@@ -84,7 +84,7 @@ public class HoodSubsystem extends SubsystemBase {
         );
     }
 
-    public Command moveDown() {
+    public Command moveDown() { 
         return Commands.startEnd(
             () -> setSpeed(HoodConstants.DOWN_SPEED),
             this::stop,

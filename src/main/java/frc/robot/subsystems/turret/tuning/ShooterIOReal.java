@@ -1,4 +1,5 @@
-package frc.robot.subsystems.turret.shooter.tuning;
+/*
+package frc.robot.subsystems.turret.tuning;
 
 import static frc.robot.util.SparkUtil.tryUntilOk;
 
@@ -12,6 +13,9 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
+import frc.robot.Constants.FlywheelConstants;
+
 import com.revrobotics.spark.config.SparkFlexConfig;
 
 public class ShooterIOReal implements ShooterIO {
@@ -33,20 +37,20 @@ public class ShooterIOReal implements ShooterIO {
 
     sparkConfig
         .idleMode(IdleMode.kCoast)
-        .inverted(ShooterConstants.kInverted)
-        .smartCurrentLimit(ShooterConstants.kCurrentLimitAmps)
-        .voltageCompensation(ShooterConstants.kNominalVoltage);
+        .inverted(FlywheelConstants.INVERTED)
+        .smartCurrentLimit(FlywheelConstants.CURRENT_LIMIT)
+        .voltageCompensation(FlywheelConstants.NOMINAL_VOLTAGE);
 
     sparkConfig
         .closedLoop
-        .pid(ShooterConstants.kP, 0.0, 0.0, ClosedLoopSlot.kSlot0)
+        .pid(FlywheelConstants.kP, 0.0, 0.0, ClosedLoopSlot.kSlot0)
         .outputRange(0, 1.0, ClosedLoopSlot.kSlot0);
 
     sparkConfig
         .closedLoop
         .feedForward
         .kS(0.001, ClosedLoopSlot.kSlot0)
-        .kV(ShooterConstants.kV, ClosedLoopSlot.kSlot0);
+        .kV(FlywheelConstants.kV, ClosedLoopSlot.kSlot0);
 
     sparkConfig
         .signals
@@ -98,3 +102,4 @@ public class ShooterIOReal implements ShooterIO {
     inputs.closedLoopActive = closedLoopActive;
   }
 }
+*/

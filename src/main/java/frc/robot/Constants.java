@@ -85,6 +85,7 @@ public static final class FlywheelConstants
     public static final boolean INVERTED = false;
     public static final boolean FOLLOWER_INVERTED = false;
     public static final int CURRENT_LIMIT = 40;
+    public static final int NOMINAL_VOLTAGE = 12;
 
     public static final IdleMode IDLE_MODE = IdleMode.kCoast;
 
@@ -114,7 +115,6 @@ public static final class HoodConstants {
 
     public static final double ZERO_OFFSET = 0.0;
 
-    // Optional (only if needed)
     public static final double DUTY_MIN = 1.0 / 1025.0;
     public static final double DUTY_MAX = 1024.0 / 1025.0;
 }
