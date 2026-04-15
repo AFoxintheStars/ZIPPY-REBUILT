@@ -118,6 +118,10 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         return Math.abs(getRPM() - targetRPM) <= FlywheelConstants.RPM_TOLERANCE;
     }
 
+    public double getCurrent() {
+        return flywheelMotor.getOutputCurrent();
+    }
+
     /* ==================== COMMANDS ==================== */
 
     public Command spinUp(double rpm) {
@@ -160,5 +164,6 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());
         SmartDashboard.putBoolean("Flywheel/Ready", isReadyToShoot());
         SmartDashboard.putBoolean("Flywheel/Spinning Up", !isReadyToShoot());
+         SmartDashboard.putNumber("FLywheel/Current", getCurrent());
     }
 }

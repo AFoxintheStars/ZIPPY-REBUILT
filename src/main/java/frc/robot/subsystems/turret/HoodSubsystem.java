@@ -53,6 +53,14 @@ public class HoodSubsystem extends SubsystemBase {
         hoodServo.set(servoOutput);
     }
 
+    public void moveUpServo() {
+        hoodServo.set(1.0);
+    }
+
+    public void moveDownServo() {
+        hoodServo.set(-1.0);
+    }
+
     public void stop() {
         hoodServo.set(0.5);
         currentSpeed = 0;
@@ -78,7 +86,8 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command moveUp() {
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.UP_SPEED),
+            () -> {setSpeed(HoodConstants.UP_SPEED);
+                System.out.println("Hood down");},
             this::stop,
             this
         );
@@ -86,7 +95,8 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command moveDown() { 
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.DOWN_SPEED),
+            () -> {setSpeed(HoodConstants.DOWN_SPEED);  
+                System.out.println("Hood Up");},
             this::stop,
             this
         );

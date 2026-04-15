@@ -328,17 +328,15 @@ public class Vision
     field2d.getObject("tracked targets").setPoses(poses);
   }
 
-  // TODO: Implement new vision cameras
-
   /**
    * Camera Enum to select each camera
    */
-  enum Cameras
+  public enum Cameras
   {
     /**
      * Intake Camera
      */
-    INTAKE_CAM("left",
+    INTAKE_CAM("intake",
              new Rotation3d(0, Math.toRadians(-24.094), Math.toRadians(30)),
              new Translation3d(Units.inchesToMeters(12.056),
                                Units.inchesToMeters(10.981),
@@ -347,11 +345,11 @@ public class Vision
     /**
      * Turret Camera
      */
-    TURRET_CAM("center",
-               new Rotation3d(0, Units.degreesToRadians(18), 0),
-               new Translation3d(Units.inchesToMeters(-4.628),
-                                 Units.inchesToMeters(-10.687),
-                                 Units.inchesToMeters(16.129)),
+    TURRET_CAM("turret",
+               new Rotation3d(0, Units.degreesToRadians(55), 0),
+               new Translation3d(Units.inchesToMeters(6),
+                                 Units.inchesToMeters(0),
+                                 Units.inchesToMeters(21.5)),
                VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1));
 
     /**

@@ -25,10 +25,13 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.HoodDownCommand;
+import frc.robot.commands.HoodUpCommand;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
 
@@ -53,6 +56,12 @@ public class RobotContainer
   private final TurretRotationSubsystem turret = new TurretRotationSubsystem();
 
   private final TurretFlywheelSubsystem flywheel = new TurretFlywheelSubsystem();
+
+  private final HoodSubsystem hood = new HoodSubsystem();
+
+  private final HoodUpCommand hoodUp = new HoodUpCommand(hood);
+
+  private final HoodDownCommand hoodDown = new HoodDownCommand(hood);
 
   private final SendableChooser<Command> autoChooser;
 
@@ -145,6 +154,8 @@ public Command rumblePulse(CommandXboxController controller) {
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     slider.setDefaultCommand(slider.setHeight(Meters.of(0)));
+
+    flywheel.setDefaultCommand(flywheel.spinUp(2000));
 
     if (autoChooser.getSelected() == null ) {
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(drivebase::zeroGyroWithAlliance));
@@ -243,14 +254,8 @@ public Command rumblePulse(CommandXboxController controller) {
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
 
-      driverXbox.rightTrigger().whileTrue(
-          flywheel.shoot()
-              .alongWith(
-                  prefeed.intake().onlyIf(flywheel::isReadyToShoot),
-                  Commands.waitUntil(flywheel::isReadyToShoot)
-                      .andThen(rumblePulse(driverXbox))
-              )
-      );
+      driverXbox.povUp().whileTrue(hoodDown);
+      driverXbox.povDown().whileTrue(hoodUp);
     }
 
   }
