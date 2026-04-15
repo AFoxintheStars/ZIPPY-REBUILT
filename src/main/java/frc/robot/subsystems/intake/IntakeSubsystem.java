@@ -30,7 +30,10 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private IntakeState currentState = IntakeState.STOPPED;
 
-  public IntakeSubsystem() {
+  private final SliderSubsystem slider;
+
+  public IntakeSubsystem(SliderSubsystem slider) {
+    this.slider = slider;
     configureMotor();
   }
 
@@ -52,12 +55,22 @@ private void configureMotor() {
 
   /** Run intake inward */
   public void intake() {
+        if (slider.isInIntakeLockRange()) {
+        stop();
+        return;
+    }
+
     currentState = IntakeState.INTAKING;
     motor.set(Constants.Intake.INTAKE_SPEED);
   }
 
   /** Run intake outward */
   public void outtake() {
+    if (slider.isInIntakeLockRange()) {
+        stop();
+        return;
+    }
+
     currentState = IntakeState.OUTTAKING;
     motor.set(Constants.Intake.OUTTAKE_SPEED);
   }
@@ -112,9 +125,15 @@ private void configureMotor() {
 
   @Override
   public void periodic() {
+
+    if (slider.isInIntakeLockRange() && currentState == IntakeState.INTAKING) {
+      stop();
+    }
+
     SmartDashboard.putNumber("Intake/Output", motor.get());
     SmartDashboard.putNumber("Intake/Current", motor.getOutputCurrent());
     SmartDashboard.putBoolean("Intake/HasPiece", isStalling());
     SmartDashboard.putString("Intake/State", currentState.name());
+    SmartDashboard.putBoolean("Intake/LockedBySlider", slider.isInIntakeLockRange());
   }
 }

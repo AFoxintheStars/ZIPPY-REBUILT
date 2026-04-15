@@ -22,7 +22,5 @@
 
 ==== TURRET ====
 15. Turret Gear
-16. Turret Flywheels
-
-==== SHIFTER ====
-17. Shifter
+16. Turret Flywheel Right
+17. Turret Flywheel Left

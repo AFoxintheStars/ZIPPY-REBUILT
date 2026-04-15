@@ -32,6 +32,7 @@ import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
 import frc.robot.util.RumbleTypes;
+import frc.robot.util.StartingPositions;
 
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -46,7 +47,7 @@ public class RobotContainer
 
   private final SliderSubsystem slider = new SliderSubsystem();
 
-  private final IntakeSubsystem intake = new IntakeSubsystem();
+  private final IntakeSubsystem intake = new IntakeSubsystem(slider);
 
   private final PrefeedSubsystem prefeed = new PrefeedSubsystem();
 
@@ -57,6 +58,20 @@ public class RobotContainer
   private final HoodSubsystem hood = new HoodSubsystem();
 
   private final SendableChooser<Command> autoChooser;
+  private final SendableChooser<Pose2d> startingPoseChooser = new SendableChooser<>();
+
+  private Pose2d applyAlliance(Pose2d pose)
+  {
+      if (DriverStation.getAlliance().isPresent() &&
+          DriverStation.getAlliance().get() == DriverStation.Alliance.Red)
+      {
+          return new Pose2d(
+              new Translation2d(16.54 - pose.getX(), pose.getY()),
+              pose.getRotation().plus(Rotation2d.fromDegrees(180))
+          );
+      }
+      return pose;
+  }
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -121,21 +136,27 @@ public class RobotContainer
 
     autoChooser = AutoBuilder.buildAutoChooser();
 
-    NamedCommands.registerCommand("Example", Commands.print("I AM AN EXAMPLE COMMAND!"));
-
     autoChooser.setDefaultOption("Do Nothing", Commands.runOnce(drivebase::zeroGyroWithAlliance)
                                                     .andThen(Commands.none()));
-
     autoChooser.addOption("Reset Gyro w/ Alliance", Commands.runOnce(drivebase::zeroGyroWithAlliance).withTimeout(.2));
 
+    startingPoseChooser.setDefaultOption("Center Hub", StartingPositions.CENTERHUB);
+    startingPoseChooser.addOption("Left Bump", StartingPositions.LEFTBUMP);
+    startingPoseChooser.addOption("Right Bump", StartingPositions.RIGHTBUMP);
+    startingPoseChooser.addOption("Left Trench", StartingPositions.LEFTTRENCH);
+    startingPoseChooser.addOption("Right Trench", StartingPositions.RIGHTTRENCH );
+
+    SmartDashboard.putData("Starting Position", startingPoseChooser);
+
     SmartDashboard.putData("Auto Chooser", autoChooser);
+    
+    slider.setDefaultCommand(slider.set(0));
 
     flywheel.setRPM(2000);
 
-    if (autoChooser.getSelected() == null ) {
-    RobotModeTriggers.autonomous().onTrue(Commands.runOnce(drivebase::zeroGyroWithAlliance));
-    }
-
+    RobotModeTriggers.autonomous().onTrue(
+        Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
+    );
   }
 
   /**
@@ -197,30 +218,39 @@ public class RobotContainer
 
       /* ================== XBOX Controller Bindings ================ */
       
-      driverXbox.a().onTrue(
+      driverXbox.button(9).onTrue(
           Commands.runOnce(drivebase::zeroGyroWithAlliance)
               .andThen(RumbleTypes.doubleTap(driverXbox))
       );
 
-      driverXbox.leftBumper().whileTrue(
+      driverXbox.leftBumper().toggleOnTrue(
           intake.intakeCommand()
-              .alongWith(RumbleTypes.softHold(driverXbox))
+              .alongWith(RumbleTypes.strongHold(driverXbox))
       );
 
       driverXbox.rightBumper().whileTrue(
           intake.outtakeCommand()
-              .alongWith(RumbleTypes.softHold(driverXbox))
-      );
-      
- 
-      driverXbox.button(8).whileTrue(
-          prefeed.intake()
               .alongWith(RumbleTypes.strongHold(driverXbox))
+      );
+
+      driverXbox.y().onTrue(
+        Commands.runOnce(() -> flywheel.adjustRPM(200))
+            .alongWith(RumbleTypes.tap(driverXbox))
+      );
+
+      driverXbox.a().onTrue(
+        Commands.runOnce(() -> flywheel.adjustRPM(-200))
+            .alongWith(RumbleTypes.tap(driverXbox))
+      );
+ 
+      driverXbox.button(8).toggleOnTrue(
+          prefeed.intake()
+              .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       driverXbox.button(7).whileTrue(
           prefeed.outtake()
-              .alongWith(RumbleTypes.strongHold(driverXbox))
+              .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       
@@ -233,12 +263,12 @@ public class RobotContainer
       driverXbox.povRight().whileTrue(turret.rotateRight());
 
       driverXbox.povUp().whileTrue(
-          hood.moveUp()
+          hood.moveServoUp()
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       driverXbox.povDown().whileTrue(
-        hood.moveDown()
+        hood.moveServoDown()
             .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
@@ -263,16 +293,15 @@ public class RobotContainer
    */
   public Command getAutonomousCommand()
   {
-  Command selected = autoChooser.getSelected();
+      Command selected = autoChooser.getSelected();
+      Pose2d selectedStart = startingPoseChooser.getSelected();
 
-  if (selected == null) return Commands.none();
+      if (selected == null) return Commands.none();
 
-  if (selected instanceof com.pathplanner.lib.commands.PathPlannerAuto auto) {
-    return auto.beforeStarting(() ->
-        drivebase.resetOdometry(auto.getStartingPose())
-    );
-  }
-
-  return selected;
+      return selected.beforeStarting(() -> {
+          if (selectedStart != null) {
+              drivebase.resetOdometry(applyAlliance(selectedStart));
+          }
+      });
   }
 }

@@ -25,6 +25,12 @@ public static final double ROBOT_MASS = 100 * 0.453592;
   {
   }
 
+  public static final class Slider
+  {
+    public static final double INTAKE_LOCK_MIN = 0.0;
+    public static final double INTAKE_LOCK_MAX = 0.14;
+  }
+
   public static final class Intake 
 {
     public static final int MOTOR_ID = 11;
@@ -35,7 +41,7 @@ public static final double ROBOT_MASS = 100 * 0.453592;
 
     public static final Current CURRENT_LIMIT = Amps.of(40);
 
-    public static final boolean INVERTED = false;
+    public static final boolean INVERTED = true;
   }
 
   public static final class Prefeed
@@ -50,8 +56,8 @@ public static final double ROBOT_MASS = 100 * 0.453592;
 
     public static final int CURRENT_LIMIT = 30;
 
-    public static final double INTAKE_SPEED = 0.6;
-    public static final double OUTTAKE_SPEED = -0.6;
+    public static final double INTAKE_SPEED = 0.8;
+    public static final double OUTTAKE_SPEED = -0.8;
 
     public static final double STALL_CURRENT_THRESHOLD = 25.0;
     public static final double STALL_VELOCITY_THRESHOLD = 100;
@@ -107,7 +113,7 @@ public static final class FlywheelConstants
 
 public static final class HoodConstants {
     public static final int SERVO_PORT = 0;
-    public static final int ENCODER_PORT = 0;
+    public static final int ENCODER_PORT = 3;
 
     public static final double DOWN_SPEED = 1.0;
     public static final double UP_SPEED = -1.0;
