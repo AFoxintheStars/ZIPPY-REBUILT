@@ -39,7 +39,7 @@ public class HoodSubsystem extends SubsystemBase {
 
         if (!isEncoderConnected()) {
             stop();
-            return;
+            return; 
         }
 
         double angle = getAngle();
@@ -49,33 +49,24 @@ public class HoodSubsystem extends SubsystemBase {
 
         currentSpeed = speed;
 
-        double servoOutput = 0.5 + (speed * 0.5);
-        hoodServo.set(servoOutput);
-    }
-
-    public void moveUpServo() {
-        hoodServo.set(1.0);
-    }
-
-    public void moveDownServo() {
-        hoodServo.set(-1.0);
+        hoodServo.setSpeed(speed);
     }
 
     public void stop() {
-        hoodServo.set(0.5);
+        hoodServo.setSpeed(0.0);
         currentSpeed = 0;
     }
 
     /* ==================== SENSORS ==================== */
 
     public double getAngle() {
-        double rotations = hoodEncoder.get(); // 0 → 1
-        double angle = rotations * 360.0;
+        double rotations = hoodEncoder.get();
+
+        double angle = rotations * 360.0 * (48.0 / 18.0);
 
         angle -= HoodConstants.ZERO_OFFSET;
-        angle = (angle + 360) % 360;
 
-        return angle;
+        return angle;   
     }
 
     public boolean isEncoderConnected() {
@@ -84,19 +75,17 @@ public class HoodSubsystem extends SubsystemBase {
 
     /* ==================== MANUAL COMMANDS ==================== */
 
-    public Command moveUp() {
+    public Command moveDown() {
         return Commands.startEnd(
-            () -> {setSpeed(HoodConstants.UP_SPEED);
-                System.out.println("Hood down");},
+            () -> setSpeed(HoodConstants.DOWN_SPEED),
             this::stop,
             this
         );
     }
 
-    public Command moveDown() { 
+    public Command moveUp() { 
         return Commands.startEnd(
-            () -> {setSpeed(HoodConstants.DOWN_SPEED);  
-                System.out.println("Hood Up");},
+            () -> setSpeed(HoodConstants.UP_SPEED),
             this::stop,
             this
         );
@@ -109,7 +98,7 @@ public class HoodSubsystem extends SubsystemBase {
         double angle = getAngle();
 
         SmartDashboard.putNumber("Hood/Angle", angle);
-        SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * 360.0);
+        SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * (48.0 / 18.0) * 360.0);
         SmartDashboard.putBoolean("Hood/Connected", isEncoderConnected());
 
         SmartDashboard.putBoolean("Hood/Upper Limit", angle >= HoodConstants.MAX_ANGLE);

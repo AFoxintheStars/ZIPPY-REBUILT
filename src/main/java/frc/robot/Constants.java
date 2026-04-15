@@ -94,21 +94,23 @@ public static final class FlywheelConstants
     public static final double kD = 0.0;
     public static final double kFF = 0.00018;
 
-    public static final double SHOOT_RPM = 2500;
+    public static final double MIN_RPM = 1000;
+    public static final double MAX_RPM = 5000;
 
     public static final double RPM_TOLERANCE = 100;
 
     public static final double GEAR_RATIO = 32.0 / 18.0;
     
     public static final int READY_CYCLES = 5;
+
 }
 
 public static final class HoodConstants {
     public static final int SERVO_PORT = 0;
     public static final int ENCODER_PORT = 0;
 
-    public static final double UP_SPEED = 1.0;
-    public static final double DOWN_SPEED = -1.0;
+    public static final double DOWN_SPEED = 1.0;
+    public static final double UP_SPEED = -1.0;
 
     public static final double MIN_ANGLE = 0;
     public static final double MAX_ANGLE = 90;

@@ -15,7 +15,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
 
 import frc.robot.Constants.FlywheelConstants;
-import frc.robot.subsystems.prefeed.PrefeedSubsystem;
     
 public class TurretFlywheelSubsystem extends SubsystemBase {
 
@@ -36,11 +35,7 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
 
     private double targetRPM = 0;
 
-    private int atSpeedCycles = 0;
-
     /* ==================== CONSTRUCTOR ==================== */
-
-    @SuppressWarnings("removal")
     public TurretFlywheelSubsystem() {
         configureMotor();
     }
@@ -89,15 +84,28 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         controller.setSetpoint(motorRPM, ControlType.kVelocity);
     }
 
-    public boolean isReadyToShoot() {
-    if (Math.abs(getRPM() - targetRPM) <= FlywheelConstants.RPM_TOLERANCE) {
-        atSpeedCycles++;
-    } else {
-        atSpeedCycles = 0;
+    public void adjustRPM(double delta) {
+        double newRPM = targetRPM + delta;
+
+        newRPM = Math.max(
+            FlywheelConstants.MIN_RPM,
+            Math.min(FlywheelConstants.MAX_RPM, newRPM)
+        );
+
+        setRPM(newRPM);
     }
 
-    return atSpeedCycles >= FlywheelConstants.READY_CYCLES;
-}
+    public void maintainRPM() {
+        controller.setSetpoint(
+            targetRPM * FlywheelConstants.GEAR_RATIO,
+            ControlType.kVelocity
+        );
+    }
+
+    public boolean isReady() {
+        return Math.abs(getRPM() - targetRPM)
+            <= FlywheelConstants.RPM_TOLERANCE;
+    }
 
     public void stop() {
         targetRPM = 0;
@@ -132,38 +140,18 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         );
     }
 
-    public Command shoot() {
-        return Commands.startEnd(
-            () -> setRPM(FlywheelConstants.SHOOT_RPM),
-            this::stop,
-            this
-        );
-    }
-
-    public Command spinUpAndWait(double rpm) {
-    return Commands.sequence(
-        Commands.runOnce(() -> setRPM(rpm)),
-        Commands.waitUntil(this::isReadyToShoot)
-        );
-    }
-
-    public Command shootWithPrefeed(PrefeedSubsystem prefeed) {
-    return Commands.parallel(
-        shoot(),
-        prefeed.intake().onlyIf(this::isReadyToShoot)
-        );
-    }
-
     /* ==================== PERIODIC ==================== */
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("Flywheel/RPM", getRPM());
-        SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
-        SmartDashboard.putNumber("Flywheel/Error", targetRPM - getRPM());
-        SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());
-        SmartDashboard.putBoolean("Flywheel/Ready", isReadyToShoot());
-        SmartDashboard.putBoolean("Flywheel/Spinning Up", !isReadyToShoot());
-         SmartDashboard.putNumber("FLywheel/Current", getCurrent());
+    if (targetRPM > 0) {
+        maintainRPM();
+    }
+
+    SmartDashboard.putNumber("Flywheel/RPM", getRPM());
+    SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
+    SmartDashboard.putNumber("Flywheel/Error", targetRPM - getRPM());
+    SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());
+    SmartDashboard.putNumber("FLywheel/Current", getCurrent());
     }
 }

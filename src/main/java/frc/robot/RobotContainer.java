@@ -14,19 +14,16 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.HoodDownCommand;
-import frc.robot.commands.HoodUpCommand;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
@@ -34,8 +31,7 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
-
-import static edu.wpi.first.units.Units.Meters;
+import frc.robot.util.RumbleTypes;
 
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -43,6 +39,7 @@ import swervelib.SwerveInputStream;
 public class RobotContainer
 {
   final         CommandXboxController driverXbox = new CommandXboxController(0);
+  final        CommandJoystick operatorJoystick = new CommandJoystick(1);
 
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
@@ -59,27 +56,7 @@ public class RobotContainer
 
   private final HoodSubsystem hood = new HoodSubsystem();
 
-  private final HoodUpCommand hoodUp = new HoodUpCommand(hood);
-
-  private final HoodDownCommand hoodDown = new HoodDownCommand(hood);
-
   private final SendableChooser<Command> autoChooser;
-
-  private Command rumbleCommand(double strength) {
-  return Commands.startEnd(
-      () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, strength),
-      () -> driverXbox.getHID().setRumble(RumbleType.kBothRumble, 0)
-  );
-}
-
-public Command rumblePulse(CommandXboxController controller) {
-    return Commands.runEnd(
-        () -> controller.getHID().setRumble(
-            GenericHID.RumbleType.kBothRumble, 0.4),
-        () -> controller.getHID().setRumble(
-            GenericHID.RumbleType.kBothRumble, 0)
-    ).withTimeout(0.2);
-}
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -153,9 +130,7 @@ public Command rumblePulse(CommandXboxController controller) {
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    slider.setDefaultCommand(slider.setHeight(Meters.of(0)));
-
-    flywheel.setDefaultCommand(flywheel.spinUp(2000));
+    flywheel.setRPM(2000);
 
     if (autoChooser.getSelected() == null ) {
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(drivebase::zeroGyroWithAlliance));
@@ -219,28 +194,33 @@ public Command rumblePulse(CommandXboxController controller) {
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
     } else
     {
+
+      /* ================== XBOX Controller Bindings ================ */
       
-      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyroWithAlliance)));
+      driverXbox.a().onTrue(
+          Commands.runOnce(drivebase::zeroGyroWithAlliance)
+              .andThen(RumbleTypes.doubleTap(driverXbox))
+      );
 
       driverXbox.leftBumper().whileTrue(
           intake.intakeCommand()
-              .alongWith(rumbleCommand(0.1))
+              .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       driverXbox.rightBumper().whileTrue(
           intake.outtakeCommand()
-              .alongWith(rumbleCommand(0.1))
+              .alongWith(RumbleTypes.softHold(driverXbox))
       );
       
  
       driverXbox.button(8).whileTrue(
           prefeed.intake()
-              .alongWith(rumbleCommand(0.25))
+              .alongWith(RumbleTypes.strongHold(driverXbox))
       );
 
       driverXbox.button(7).whileTrue(
           prefeed.outtake()
-              .alongWith(rumbleCommand(0.25))
+              .alongWith(RumbleTypes.strongHold(driverXbox))
       );
 
       
@@ -248,14 +228,30 @@ public Command rumblePulse(CommandXboxController controller) {
       // driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
       driverXbox.b().whileTrue(slider.set(-0.15));
       driverXbox.x().whileTrue(slider.set(0.15));
-
-      driverXbox.y().whileTrue(prefeed.intake());
       
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
 
-      driverXbox.povUp().whileTrue(hoodDown);
-      driverXbox.povDown().whileTrue(hoodUp);
+      driverXbox.povUp().whileTrue(
+          hood.moveUp()
+              .alongWith(RumbleTypes.softHold(driverXbox))
+      );
+
+      driverXbox.povDown().whileTrue(
+        hood.moveDown()
+            .alongWith(RumbleTypes.softHold(driverXbox))
+      );
+
+      /* ================== Operator Joystick Bindings ================ */
+
+        operatorJoystick.button(1).whileTrue(slider.set(-0.15));
+        operatorJoystick.button(2).whileTrue(slider.set(0.15));
+  
+        operatorJoystick.povUp().whileTrue(hood.moveUp());
+        operatorJoystick.povDown().whileTrue(hood.moveDown());
+  
+        operatorJoystick.povLeft().whileTrue(turret.rotateLeft());
+        operatorJoystick.povRight().whileTrue(turret.rotateRight());
     }
 
   }
