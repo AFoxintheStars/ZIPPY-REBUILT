@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.subsystems.TurretTrackAprilTagCommand;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
@@ -56,6 +57,7 @@ public class RobotContainer
   private final TurretFlywheelSubsystem flywheel = new TurretFlywheelSubsystem();
 
   private final HoodSubsystem hood = new HoodSubsystem();
+  private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret);
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Pose2d> startingPoseChooser = new SendableChooser<>();
@@ -270,6 +272,7 @@ public class RobotContainer
       
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
+      driverXbox.rightTrigger().whileTrue(turretTrackAprilTag);
 
       driverXbox.povUp().whileTrue(
           hood.moveServoUp()
