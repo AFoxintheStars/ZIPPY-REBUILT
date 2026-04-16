@@ -142,6 +142,11 @@ public static final class VisionConstants {
     // Example IDs (update to real field IDs)
     public static final int[] BLUE_HUB_TAGS = {11, 2, 10, 9, 8, 5};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
+
+    public static final double TURRET_TRACK_KP = 0.015;
+    public static final double TURRET_TRACK_KS = 0.04;
+    public static final double TURRET_TRACK_MAX_SPEED = 0.35;
+    public static final double TURRET_AIM_TOLERANCE_DEG = 1.25;
 }
 
   public static class OperatorConstants
