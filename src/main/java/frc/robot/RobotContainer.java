@@ -146,6 +146,15 @@ public class RobotContainer
     startingPoseChooser.addOption("Left Trench", StartingPositions.LEFTTRENCH);
     startingPoseChooser.addOption("Right Trench", StartingPositions.RIGHTTRENCH );
 
+    NamedCommands.registerCommand("Pull Out Intake", slider.set(0.15).withTimeout(1.5));
+    NamedCommands.registerCommand("Retract Intake", slider.set(-0.15).withTimeout(1.5));
+
+    NamedCommands.registerCommand("Activate Intake", Commands.runOnce(() -> intake.intakeCommand()));
+    NamedCommands.registerCommand("Deactivate Intake", Commands.runOnce(() -> intake.outtakeCommand()));
+
+    NamedCommands.registerCommand("Ramp Up Turret", Commands.runOnce(() -> flywheel.adjustRPM(200)));
+    NamedCommands.registerCommand("Ramp Down Turret", Commands.runOnce(() -> flywheel.adjustRPM(-200)));
+
     SmartDashboard.putData("Starting Position", startingPoseChooser);
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -274,11 +283,13 @@ public class RobotContainer
 
       /* ================== Operator Joystick Bindings ================ */
 
-        operatorJoystick.button(1).whileTrue(slider.set(-0.15));
-        operatorJoystick.button(2).whileTrue(slider.set(0.15));
+        operatorJoystick.button(1).toggleOnTrue(prefeed.intake());
+        operatorJoystick.button(2).whileTrue(prefeed.outtake());
+        operatorJoystick.button(4).whileTrue(slider.set(-0.15));
+        operatorJoystick.button(3).whileTrue(slider.set(0.15));
   
-        operatorJoystick.povUp().whileTrue(hood.moveUp());
-        operatorJoystick.povDown().whileTrue(hood.moveDown());
+        operatorJoystick.povUp().whileTrue(hood.moveServoUp());
+        operatorJoystick.povDown().whileTrue(hood.moveServoDown());
   
         operatorJoystick.povLeft().whileTrue(turret.rotateLeft());
         operatorJoystick.povRight().whileTrue(turret.rotateRight());
