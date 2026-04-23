@@ -19,6 +19,18 @@
                 "data": {
                   "pathName": "Intake Bottom Fuel Array"
                 }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Pull Out Intake"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Activate Intake"
+                }
               }
             ]
           }
@@ -26,7 +38,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Right Return to Blue"
+            "pathName": "Right Return to Alliance"
           }
         },
         {

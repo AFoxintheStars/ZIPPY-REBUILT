@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -57,6 +58,7 @@ public class RobotContainer
   private final TurretFlywheelSubsystem flywheel = new TurretFlywheelSubsystem();
 
   private final HoodSubsystem hood = new HoodSubsystem();
+
   private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret);
 
   private final SendableChooser<Command> autoChooser;
@@ -288,7 +290,10 @@ public class RobotContainer
 
         operatorJoystick.button(1).toggleOnTrue(prefeed.intake());
         operatorJoystick.button(2).whileTrue(prefeed.outtake());
-        operatorJoystick.button(4).whileTrue(slider.set(-0.15));
+        operatorJoystick.button(4).whileTrue(new ParallelCommandGroup(
+            slider.set(-0.15),
+            intake.intakeCommand())
+        );
         operatorJoystick.button(3).whileTrue(slider.set(0.15));
   
         operatorJoystick.povUp().whileTrue(hood.moveServoUp());
