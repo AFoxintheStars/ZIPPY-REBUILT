@@ -135,6 +135,11 @@ public static final class HoodConstants {
       {3.5, 35.0},
       {4.0, 40.0}
   };
+
+    public static final double TRACKING_KP = 0.03;
+    public static final double TRACKING_KS = 0.08;
+    public static final double TRACKING_MAX_SPEED = 0.45;
+    public static final double ANGLE_TOLERANCE_DEG = 1.0;
 }
 
 public static final class VisionConstants {

@@ -59,7 +59,7 @@ public class RobotContainer
 
   private final HoodSubsystem hood = new HoodSubsystem();
 
-  private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret);
+  private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret, hood);
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Pose2d> startingPoseChooser = new SendableChooser<>();
