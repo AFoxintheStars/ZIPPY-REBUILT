@@ -148,7 +148,7 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         maintainRPM();
     }
 
-    SmartDashboard.putNumber("Flywheel/RPM", getRPM());
+    SmartDashboard.putNumber("Flywheel/RPM", getRPM() * 2);
     SmartDashboard.putNumber("Flywheel/Target RPM", targetRPM);
     SmartDashboard.putNumber("Flywheel/Error", targetRPM - getRPM());
     SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());

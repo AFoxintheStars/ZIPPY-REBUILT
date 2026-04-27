@@ -145,7 +145,7 @@ public static final class HoodConstants {
 
 public static final class VisionConstants {
 
-    public static final int[] BLUE_HUB_TAGS = {11, 31, 2, 10, 9, 8, 5};
+    public static final int[] BLUE_HUB_TAGS = {11, 31, 16, 2, 10, 9, 8, 5};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
 
     public static final double TURRET_TRACK_KP = 0.0005;
