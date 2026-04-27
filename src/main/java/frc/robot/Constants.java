@@ -121,7 +121,7 @@ public static final class HoodConstants {
     public static final double MIN_ANGLE = 0;
     public static final double MAX_ANGLE = 90;
 
-    public static final double ZERO_OFFSET = 0.0;
+    public static final double ZERO_OFFSET = 755.0;
 
     public static final double DUTY_MIN = 1.0 / 1025.0;
     public static final double DUTY_MAX = 1024.0 / 1025.0;
@@ -144,7 +144,7 @@ public static final class HoodConstants {
 
 public static final class VisionConstants {
 
-    public static final int[] BLUE_HUB_TAGS = {11, 31, 2, 10, 9, 8, 5};
+    public static final int[] BLUE_HUB_TAGS = {11, 31, 16, 2, 10, 9, 8, 5};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
 
     public static final double TURRET_TRACK_KP = 0.0005;

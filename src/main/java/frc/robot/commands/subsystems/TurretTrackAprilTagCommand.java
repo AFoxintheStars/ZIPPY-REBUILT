@@ -36,7 +36,7 @@ public class TurretTrackAprilTagCommand extends Command
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
       SmartDashboard.putNumber("Turret/TrackingDistanceMeters", -1.0);
       return;
-    }
+    }   
 
     SmartDashboard.putBoolean("Turret/TrackingTagFound", true);
     SmartDashboard.putNumber("Turret/TrackedTagId", target.getFiducialId());
