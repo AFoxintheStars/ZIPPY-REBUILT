@@ -99,10 +99,9 @@ public class HoodSubsystem extends SubsystemBase {
 
     public double getAngle() {
         double rotations = hoodEncoder.get();
-
-        double angle = rotations * 360.0 * (48.0 / 18.0);
-
-        angle -= HoodConstants.ZERO_OFFSET;
+        double rawAngle = rotations * 360.0 * (48.0 / 18.0);
+        double direction = HoodConstants.ENCODER_INVERTED ? -1.0 : 1.0;
+        double angle = (rawAngle - HoodConstants.ZERO_OFFSET) * direction;
 
         return angle;   
     }
@@ -154,6 +153,7 @@ public class HoodSubsystem extends SubsystemBase {
 
         SmartDashboard.putNumber("Hood/Angle", angle);
         SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * (48.0 / 18.0) * 360.0);
+        SmartDashboard.putBoolean("Hood/EncoderInverted", HoodConstants.ENCODER_INVERTED);
         SmartDashboard.putBoolean("Hood/Connected", isEncoderConnected());
 
         SmartDashboard.putBoolean("Hood/Upper Limit", angle >= HoodConstants.MAX_ANGLE);
