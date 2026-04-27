@@ -122,6 +122,7 @@ public static final class HoodConstants {
     public static final double MAX_ANGLE = 90;
 
     public static final double ZERO_OFFSET = 0.0;
+    public static final boolean ENCODER_INVERTED = true;
 
     public static final double DUTY_MIN = 1.0 / 1025.0;
     public static final double DUTY_MAX = 1024.0 / 1025.0;
@@ -135,6 +136,11 @@ public static final class HoodConstants {
       {3.5, 35.0},
       {4.0, 40.0}
   };
+
+    public static final double TRACKING_KP = 0.03;
+    public static final double TRACKING_KS = 0.08;
+    public static final double TRACKING_MAX_SPEED = 0.45;
+    public static final double ANGLE_TOLERANCE_DEG = 1.0;
 }
 
 public static final class VisionConstants {
