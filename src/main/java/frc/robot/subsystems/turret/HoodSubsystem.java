@@ -20,6 +20,7 @@ public class HoodSubsystem extends SubsystemBase {
     /* ==================== STATE ==================== */
 
     private double currentSpeed = 0;
+    private double currentServoSpeed = 0;
     private double targetAngle = Double.NaN;
 
     /* ===================== CONSTRUCTOR ==================== */
@@ -34,24 +35,68 @@ public class HoodSubsystem extends SubsystemBase {
     /* ==================== CONTROL ==================== */
 
     public void setSpeed(double speed) {
-        speed = Math.max(-1.0, Math.min(1.0, speed));
+        // speed is in angle space: +speed should increase hood angle.
+        double limitedSpeed = Math.max(-1.0, Math.min(1.0, speed));
 
-        if (Math.abs(speed) < 0.05) speed = 0;
+        if (Math.abs(limitedSpeed) < 0.05) limitedSpeed = 0;
 
         if (isEncoderConnected()) {
             double angle = getAngle();
-            if (speed > 0 && angle >= HoodConstants.MAX_ANGLE) speed = 0;
-            if (speed < 0 && angle <= HoodConstants.MIN_ANGLE) speed = 0;
+            if (limitedSpeed > 0 && angle >= HoodConstants.MAX_ANGLE) limitedSpeed = 0;
+            if (limitedSpeed < 0 && angle <= HoodConstants.MIN_ANGLE) limitedSpeed = 0;
         }
 
-        currentSpeed = speed;
+        currentSpeed = limitedSpeed;
+        currentServoSpeed = HoodConstants.SERVO_INVERTED ? -limitedSpeed : limitedSpeed;
 
-        hoodServo.set(0.5 + (speed * 0.5));
+        hoodServo.set(0.5 + (currentServoSpeed * 0.5));
     }
 
     public void stop() {
         hoodServo.set(0.5);
         currentSpeed = 0;
+        currentServoSpeed = 0;
+    }
+
+    public void clearTargetAngle() {
+        targetAngle = Double.NaN;
+    }
+
+    public void setTargetAngle(double angleDeg) {
+        targetAngle = clampAngle(angleDeg);
+        runClosedLoop();
+    }
+
+    public void setTargetAngleFromDistance(double distanceMeters) {
+        setTargetAngle(getLookupAngle(distanceMeters));
+    }
+
+    public double getTargetAngle() {
+        return targetAngle;
+    }
+
+    public double getLookupAngle(double distanceMeters) {
+        return interpolate(distanceMeters, HoodConstants.HOOD_LOOKUP);
+    }
+
+    private void runClosedLoop() {
+        if (!isEncoderConnected() || Double.isNaN(targetAngle)) {
+            stop();
+            return;
+        }
+
+        double error = targetAngle - getAngle();
+        if (Math.abs(error) <= HoodConstants.ANGLE_TOLERANCE_DEG) {
+            stop();
+            return;
+        }
+
+        double speedCmd = (error * HoodConstants.TRACKING_KP)
+            + Math.copySign(HoodConstants.TRACKING_KS, error);
+        speedCmd = Math.max(-HoodConstants.TRACKING_MAX_SPEED,
+            Math.min(HoodConstants.TRACKING_MAX_SPEED, speedCmd));
+
+        setSpeed(speedCmd);
     }
 
     public void clearTargetAngle() {
@@ -154,12 +199,14 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/Angle", angle);
         SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * (48.0 / 18.0) * 360.0);
         SmartDashboard.putBoolean("Hood/EncoderInverted", HoodConstants.ENCODER_INVERTED);
+        SmartDashboard.putBoolean("Hood/ServoInverted", HoodConstants.SERVO_INVERTED);
         SmartDashboard.putBoolean("Hood/Connected", isEncoderConnected());
 
         SmartDashboard.putBoolean("Hood/Upper Limit", angle >= HoodConstants.MAX_ANGLE);
         SmartDashboard.putBoolean("Hood/Lower Limit", angle <= HoodConstants.MIN_ANGLE);
 
         SmartDashboard.putNumber("Hood/Speed", currentSpeed);
+        SmartDashboard.putNumber("Hood/ServoSpeed", currentServoSpeed);
         SmartDashboard.putNumber("Hood/TargetAngle", targetAngle);
         SmartDashboard.putNumber("Hood/ErrorDeg", error);
     }

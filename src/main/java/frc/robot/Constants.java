@@ -115,14 +115,17 @@ public static final class HoodConstants {
     public static final int SERVO_PORT = 0;
     public static final int ENCODER_PORT = 3;
 
-    public static final double DOWN_SPEED = 1.0;
-    public static final double UP_SPEED = -1.0;
+    // Speeds are expressed in "angle space":
+    // +speed => increase hood angle, -speed => decrease hood angle.
+    public static final double DOWN_SPEED = -1.0;
+    public static final double UP_SPEED = 1.0;
 
     public static final double MIN_ANGLE = 0;
     public static final double MAX_ANGLE = 700;
 
     public static final double ZERO_OFFSET = 739.5;
     public static final boolean ENCODER_INVERTED = true;
+    public static final boolean SERVO_INVERTED = true;
 
     public static final double DUTY_MIN = 1.0 / 1025.0;
     public static final double DUTY_MAX = 1024.0 / 1025.0;
@@ -139,7 +142,7 @@ public static final class HoodConstants {
 
     public static final double TRACKING_KP = 0.03;
     public static final double TRACKING_KS = 0.08;
-    public static final double TRACKING_MAX_SPEED = -0.6;
+    public static final double TRACKING_MAX_SPEED = 0.45;
     public static final double ANGLE_TOLERANCE_DEG = 1.0;
 }
 
