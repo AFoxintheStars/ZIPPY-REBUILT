@@ -288,16 +288,29 @@ public class RobotContainer
 
       /* ================== Operator Joystick Bindings ================ */
 
-        operatorJoystick.button(1).toggleOnTrue(prefeed.intake());
-        operatorJoystick.button(2).whileTrue(prefeed.outtake());
+        operatorJoystick.button(1).toggleOnTrue(
+            prefeed.intake()
+                .alongWith(RumbleTypes.softHold(driverXbox))
+        );
+        operatorJoystick.button(2).whileTrue(
+            prefeed.outtake()
+                .alongWith(RumbleTypes.softHold(driverXbox))
+        );
         operatorJoystick.button(4).whileTrue(new ParallelCommandGroup(
             slider.set(-0.15),
-            intake.intakeCommand())
+            intake.intakeCommand(),
+            RumbleTypes.strongHold(driverXbox))
         );
         operatorJoystick.button(3).whileTrue(slider.set(0.15));
   
-        operatorJoystick.povUp().whileTrue(hood.moveServoUp());
-        operatorJoystick.povDown().whileTrue(hood.moveServoDown());
+        operatorJoystick.povUp().whileTrue(
+            hood.moveServoUp()
+                .alongWith(RumbleTypes.softHold(driverXbox))
+        );
+        operatorJoystick.povDown().whileTrue(
+            hood.moveServoDown()
+                .alongWith(RumbleTypes.softHold(driverXbox))
+        );
   
         operatorJoystick.povLeft().whileTrue(turret.rotateLeft());
         operatorJoystick.povRight().whileTrue(turret.rotateRight());
