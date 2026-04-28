@@ -277,12 +277,12 @@ public class RobotContainer
       driverXbox.rightTrigger().whileTrue(turretTrackAprilTag);
 
       driverXbox.povUp().whileTrue(
-          hood.moveServoUp()
+          hood.moveUp()
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       driverXbox.povDown().whileTrue(
-        hood.moveServoDown()
+        hood.moveDown()
             .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
