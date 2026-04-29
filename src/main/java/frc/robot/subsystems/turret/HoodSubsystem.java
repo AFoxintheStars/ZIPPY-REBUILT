@@ -22,6 +22,7 @@ public class HoodSubsystem extends SubsystemBase {
     private double currentSpeed = 0;
     private double currentServoSpeed = 0;
     private double targetAngle = Double.NaN;
+    private double zeroOffsetDeg = HoodConstants.ZERO_OFFSET;
 
     /* ===================== CONSTRUCTOR ==================== */
 
@@ -30,6 +31,9 @@ public class HoodSubsystem extends SubsystemBase {
             HoodConstants.DUTY_MIN,
             HoodConstants.DUTY_MAX
         );
+
+        SmartDashboard.putData("Hood/ZeroToCurrent",
+            Commands.runOnce(this::zeroAngleToCurrentPosition, this));
     }
 
     /* ==================== CONTROL ==================== */
@@ -102,16 +106,25 @@ public class HoodSubsystem extends SubsystemBase {
     /* ==================== SENSORS ==================== */
 
     public double getAngle() {
-        double rotations = hoodEncoder.get();
-        double rawAngle = rotations * 360.0 * (48.0 / 18.0);
+        double rawAngle = getRawEncoderAngleDegrees();
         double direction = HoodConstants.ENCODER_INVERTED ? -1.0 : 1.0;
-        double angle = (rawAngle - HoodConstants.ZERO_OFFSET) * direction;
-
-        return angle;   
+        return (rawAngle - zeroOffsetDeg) * direction;
     }
 
     public boolean isEncoderConnected() {
         return hoodEncoder.isConnected();
+    }
+
+    public void zeroAngleToCurrentPosition() {
+        zeroOffsetDeg = getRawEncoderAngleDegrees();
+    }
+
+    public void setZeroOffsetDegrees(double zeroOffsetDeg) {
+        this.zeroOffsetDeg = zeroOffsetDeg;
+    }
+
+    public double getZeroOffsetDegrees() {
+        return zeroOffsetDeg;
     }
 
     /* ==================== MANUAL COMMANDS ==================== */
@@ -156,7 +169,7 @@ public class HoodSubsystem extends SubsystemBase {
         double error = Double.isNaN(targetAngle) ? 0.0 : (targetAngle - angle);
 
         SmartDashboard.putNumber("Hood/Angle", angle);
-        SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * (48.0 / 18.0) * 360.0);
+        SmartDashboard.putNumber("Hood/Raw Angle", getRawEncoderAngleDegrees());
         SmartDashboard.putBoolean("Hood/EncoderInverted", HoodConstants.ENCODER_INVERTED);
         SmartDashboard.putBoolean("Hood/ServoInverted", HoodConstants.SERVO_INVERTED);
         SmartDashboard.putBoolean("Hood/Connected", isEncoderConnected());
@@ -168,6 +181,11 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/ServoSpeed", currentServoSpeed);
         SmartDashboard.putNumber("Hood/TargetAngle", targetAngle);
         SmartDashboard.putNumber("Hood/ErrorDeg", error);
+        SmartDashboard.putNumber("Hood/ZeroOffsetDeg", zeroOffsetDeg);
+    }
+
+    private double getRawEncoderAngleDegrees() {
+        return hoodEncoder.get() * HoodConstants.DEGREES_PER_ENCODER_ROTATION;
     }
 
     private static double clampAngle(double angleDeg) {
