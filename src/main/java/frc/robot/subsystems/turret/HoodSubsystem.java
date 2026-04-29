@@ -6,6 +6,9 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
 import frc.robot.Constants.HoodConstants;
+import frc.robot.util.ShooterLookupTable;
+import frc.robot.util.ShotData;
+import java.util.NavigableMap;
 
 public class HoodSubsystem extends SubsystemBase {
 
@@ -22,6 +25,9 @@ public class HoodSubsystem extends SubsystemBase {
     private double currentSpeed = 0;
     private double currentServoSpeed = 0;
     private double targetAngle = Double.NaN;
+    private double zeroOffsetDeg = HoodConstants.ZERO_OFFSET;
+    private final NavigableMap<Double, ShotData> shooterLookupTable =
+        ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
 
     /* ===================== CONSTRUCTOR ==================== */
 
@@ -30,6 +36,9 @@ public class HoodSubsystem extends SubsystemBase {
             HoodConstants.DUTY_MIN,
             HoodConstants.DUTY_MAX
         );
+
+        SmartDashboard.putData("Hood/ZeroToCurrent",
+            Commands.runOnce(this::zeroAngleToCurrentPosition, this));
     }
 
     /* ==================== CONTROL ==================== */
@@ -76,7 +85,7 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public double getLookupAngle(double distanceMeters) {
-        return interpolate(distanceMeters, HoodConstants.HOOD_LOOKUP);
+        return ShooterLookupTable.interpolate(distanceMeters, shooterLookupTable).angleDeg;
     }
 
     private void runClosedLoop() {
@@ -102,16 +111,25 @@ public class HoodSubsystem extends SubsystemBase {
     /* ==================== SENSORS ==================== */
 
     public double getAngle() {
-        double rotations = hoodEncoder.get();
-        double rawAngle = rotations * 360.0 * (48.0 / 18.0);
+        double rawAngle = getRawEncoderAngleDegrees();
         double direction = HoodConstants.ENCODER_INVERTED ? -1.0 : 1.0;
-        double angle = (rawAngle - HoodConstants.ZERO_OFFSET) * direction;
-
-        return angle;   
+        return (rawAngle - zeroOffsetDeg) * direction;
     }
 
     public boolean isEncoderConnected() {
         return hoodEncoder.isConnected();
+    }
+
+    public void zeroAngleToCurrentPosition() {
+        zeroOffsetDeg = getRawEncoderAngleDegrees();
+    }
+
+    public void setZeroOffsetDegrees(double zeroOffsetDeg) {
+        this.zeroOffsetDeg = zeroOffsetDeg;
+    }
+
+    public double getZeroOffsetDegrees() {
+        return zeroOffsetDeg;
     }
 
     /* ==================== MANUAL COMMANDS ==================== */
@@ -156,7 +174,7 @@ public class HoodSubsystem extends SubsystemBase {
         double error = Double.isNaN(targetAngle) ? 0.0 : (targetAngle - angle);
 
         SmartDashboard.putNumber("Hood/Angle", angle);
-        SmartDashboard.putNumber("Hood/Raw Angle", hoodEncoder.get() * (48.0 / 18.0) * 360.0);
+        SmartDashboard.putNumber("Hood/Raw Angle", getRawEncoderAngleDegrees());
         SmartDashboard.putBoolean("Hood/EncoderInverted", HoodConstants.ENCODER_INVERTED);
         SmartDashboard.putBoolean("Hood/ServoInverted", HoodConstants.SERVO_INVERTED);
         SmartDashboard.putBoolean("Hood/Connected", isEncoderConnected());
@@ -168,37 +186,16 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/ServoSpeed", currentServoSpeed);
         SmartDashboard.putNumber("Hood/TargetAngle", targetAngle);
         SmartDashboard.putNumber("Hood/ErrorDeg", error);
+        SmartDashboard.putNumber("Hood/ZeroOffsetDeg", zeroOffsetDeg);
+        SmartDashboard.putNumber("Hood/LookupRows", shooterLookupTable.size());
+    }
+
+    private double getRawEncoderAngleDegrees() {
+        return hoodEncoder.get() * HoodConstants.DEGREES_PER_ENCODER_ROTATION;
     }
 
     private static double clampAngle(double angleDeg) {
         return Math.max(HoodConstants.MIN_ANGLE, Math.min(HoodConstants.MAX_ANGLE, angleDeg));
     }
 
-    private static double interpolate(double x, double[][] table) {
-        if (table.length == 0) {
-            return 0.0;
-        }
-
-        if (x <= table[0][0]) {
-            return table[0][1];
-        }
-
-        if (x >= table[table.length - 1][0]) {
-            return table[table.length - 1][1];
-        }
-
-        for (int i = 0; i < table.length - 1; i++) {
-            double x1 = table[i][0];
-            double y1 = table[i][1];
-            double x2 = table[i + 1][0];
-            double y2 = table[i + 1][1];
-
-            if (x >= x1 && x <= x2) {
-                double t = (x - x1) / (x2 - x1);
-                return y1 + t * (y2 - y1);
-            }
-        }
-
-        return table[table.length - 1][1];
-    }
 }

@@ -123,22 +123,17 @@ public static final class HoodConstants {
     public static final double MIN_ANGLE = 0;
     public static final double MAX_ANGLE = 700;
 
+    public static final double PINION_TEETH = 36.0;
+    public static final double RACK_EQUIVALENT_TEETH = 44.0;
+    public static final double DEGREES_PER_ENCODER_ROTATION =
+        360.0 * (PINION_TEETH / RACK_EQUIVALENT_TEETH);
+
     public static final double ZERO_OFFSET = 739.5;
     public static final boolean ENCODER_INVERTED = true;
     public static final boolean SERVO_INVERTED = true;
 
     public static final double DUTY_MIN = 1.0 / 1025.0;
     public static final double DUTY_MAX = 1024.0 / 1025.0;
-
-    public static final double[][] HOOD_LOOKUP = {
-      {1.0, 200.0},
-      {1.5, 250.0},
-      {2.0, 300.0},
-      {2.5, 350.0},
-      {3.0, 400.0},
-      {3.5, 450.0},
-      {4.0, 500.0}
-  };
 
     public static final double TRACKING_KP = 0.03;
     public static final double TRACKING_KS = 0.08;
