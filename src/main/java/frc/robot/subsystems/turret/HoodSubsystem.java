@@ -6,6 +6,9 @@ import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
 import frc.robot.Constants.HoodConstants;
+import frc.robot.util.ShooterLookupTable;
+import frc.robot.util.ShotData;
+import java.util.NavigableMap;
 
 public class HoodSubsystem extends SubsystemBase {
 
@@ -23,6 +26,8 @@ public class HoodSubsystem extends SubsystemBase {
     private double currentServoSpeed = 0;
     private double targetAngle = Double.NaN;
     private double zeroOffsetDeg = HoodConstants.ZERO_OFFSET;
+    private final NavigableMap<Double, ShotData> shooterLookupTable =
+        ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
 
     /* ===================== CONSTRUCTOR ==================== */
 
@@ -80,7 +85,7 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public double getLookupAngle(double distanceMeters) {
-        return interpolate(distanceMeters, HoodConstants.HOOD_LOOKUP);
+        return ShooterLookupTable.interpolate(distanceMeters, shooterLookupTable).angleDeg;
     }
 
     private void runClosedLoop() {
@@ -182,6 +187,7 @@ public class HoodSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Hood/TargetAngle", targetAngle);
         SmartDashboard.putNumber("Hood/ErrorDeg", error);
         SmartDashboard.putNumber("Hood/ZeroOffsetDeg", zeroOffsetDeg);
+        SmartDashboard.putNumber("Hood/LookupRows", shooterLookupTable.size());
     }
 
     private double getRawEncoderAngleDegrees() {
@@ -192,31 +198,4 @@ public class HoodSubsystem extends SubsystemBase {
         return Math.max(HoodConstants.MIN_ANGLE, Math.min(HoodConstants.MAX_ANGLE, angleDeg));
     }
 
-    private static double interpolate(double x, double[][] table) {
-        if (table.length == 0) {
-            return 0.0;
-        }
-
-        if (x <= table[0][0]) {
-            return table[0][1];
-        }
-
-        if (x >= table[table.length - 1][0]) {
-            return table[table.length - 1][1];
-        }
-
-        for (int i = 0; i < table.length - 1; i++) {
-            double x1 = table[i][0];
-            double y1 = table[i][1];
-            double x2 = table[i + 1][0];
-            double y2 = table[i + 1][1];
-
-            if (x >= x1 && x <= x2) {
-                double t = (x - x1) / (x2 - x1);
-                return y1 + t * (y2 - y1);
-            }
-        }
-
-        return table[table.length - 1][1];
-    }
 }
