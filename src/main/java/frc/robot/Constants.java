@@ -19,7 +19,7 @@ public final class Constants
 public static final double ROBOT_MASS = 131 * 0.453592;
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
   public static final double LOOP_TIME  = 0.13;
-  public static final double MAX_SPEED  = Units.feetToMeters(16);
+  public static final double MAX_SPEED  = Units.feetToMeters(7);
 
   public static final class DrivebaseConstants
   {
@@ -148,12 +148,12 @@ public static final class HoodConstants {
 
 public static final class VisionConstants {
 
-    public static final int[] BLUE_HUB_TAGS = {11, 31, 16, 2, 10, 9, 8, 5};
+    public static final int[] BLUE_HUB_TAGS = {14, 4, 2, 10, 5};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
 
     public static final double TURRET_TRACK_KP = 0.001;
     public static final double TURRET_TRACK_KS = 0.02;
-    public static final double TURRET_TRACK_MAX_SPEED = 0.5;
+    public static final double TURRET_TRACK_MAX_SPEED = 0.8;
     public static final double TURRET_AIM_TOLERANCE_DEG = 1.25;
 }
 
