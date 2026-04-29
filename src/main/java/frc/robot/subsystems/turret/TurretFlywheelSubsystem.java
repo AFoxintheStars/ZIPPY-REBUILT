@@ -13,8 +13,11 @@ import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
+import frc.robot.util.ShooterLookupTable;
+import frc.robot.util.ShotData;
 
 import frc.robot.Constants.FlywheelConstants;
+import java.util.NavigableMap;
     
 public class TurretFlywheelSubsystem extends SubsystemBase {
 
@@ -34,6 +37,8 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
     /* ==================== STATE ==================== */
 
     private double targetRPM = 0;
+    private final NavigableMap<Double, ShotData> shooterLookupTable =
+        ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
 
     /* ==================== CONSTRUCTOR ==================== */
     public TurretFlywheelSubsystem() {
@@ -82,6 +87,14 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
         double motorRPM = flywheelRPM * FlywheelConstants.GEAR_RATIO;
 
         controller.setSetpoint(motorRPM, ControlType.kVelocity);
+    }
+
+    public double getLookupRPM(double distanceMeters) {
+        return ShooterLookupTable.interpolate(distanceMeters, shooterLookupTable).flywheelRpm;
+    }
+
+    public void setRPMFromDistance(double distanceMeters) {
+        setRPM(getLookupRPM(distanceMeters));
     }
 
     public void adjustRPM(double delta) {
@@ -153,5 +166,6 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Flywheel/Error", targetRPM - getRPM());
     SmartDashboard.putBoolean("Flywheel/At Speed", atTargetSpeed());
     SmartDashboard.putNumber("FLywheel/Current", getCurrent());
+    SmartDashboard.putNumber("Flywheel/LookupRows", shooterLookupTable.size());
     }
 }
