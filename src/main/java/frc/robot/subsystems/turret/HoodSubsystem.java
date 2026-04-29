@@ -99,47 +99,6 @@ public class HoodSubsystem extends SubsystemBase {
         setSpeed(speedCmd);
     }
 
-    public void clearTargetAngle() {
-        targetAngle = Double.NaN;
-    }
-
-    public void setTargetAngle(double angleDeg) {
-        targetAngle = clampAngle(angleDeg);
-        runClosedLoop();
-    }
-
-    public void setTargetAngleFromDistance(double distanceMeters) {
-        setTargetAngle(getLookupAngle(distanceMeters));
-    }
-
-    public double getTargetAngle() {
-        return targetAngle;
-    }
-
-    public double getLookupAngle(double distanceMeters) {
-        return interpolate(distanceMeters, HoodConstants.HOOD_LOOKUP);
-    }
-
-    private void runClosedLoop() {
-        if (!isEncoderConnected() || Double.isNaN(targetAngle)) {
-            stop();
-            return;
-        }
-
-        double error = targetAngle - getAngle();
-        if (Math.abs(error) <= HoodConstants.ANGLE_TOLERANCE_DEG) {
-            stop();
-            return;
-        }
-
-        double speedCmd = (error * HoodConstants.TRACKING_KP)
-            + Math.copySign(HoodConstants.TRACKING_KS, error);
-        speedCmd = Math.max(-HoodConstants.TRACKING_MAX_SPEED,
-            Math.min(HoodConstants.TRACKING_MAX_SPEED, speedCmd));
-
-        setSpeed(speedCmd);
-    }
-
     /* ==================== SENSORS ==================== */
 
     public double getAngle() {
