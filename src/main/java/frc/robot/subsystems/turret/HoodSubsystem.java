@@ -39,6 +39,9 @@ public class HoodSubsystem extends SubsystemBase {
             HoodConstants.DUTY_MIN,
             HoodConstants.DUTY_MAX
         );
+
+        SmartDashboard.putData("Hood/ZeroToCurrent",
+            Commands.runOnce(this::zeroAngleToCurrentPosition, this));
     }
 
     /* ==================== CONTROL ==================== */
@@ -122,18 +125,27 @@ public class HoodSubsystem extends SubsystemBase {
         double direction = HoodConstants.ENCODER_INVERTED ? -1.0 : 1.0;
         double angle = (rawAngle - zeroOffsetDeg) * direction;
 
-        return angle;   
-    }
-
     public boolean isEncoderConnected() {
         return hoodEncoder.isConnected();
+    }
+
+    public void zeroAngleToCurrentPosition() {
+        zeroOffsetDeg = getRawEncoderAngleDegrees();
+    }
+
+    public void setZeroOffsetDegrees(double zeroOffsetDeg) {
+        this.zeroOffsetDeg = zeroOffsetDeg;
+    }
+
+    public double getZeroOffsetDegrees() {
+        return zeroOffsetDeg;
     }
 
     /* ==================== MANUAL COMMANDS ==================== */
 
     public Command moveDown() {
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.DOWN_SPEED),
+            () -> hoodServo.set(HoodConstants.DOWN_SPEED),
             this::stop,
             this
         );
@@ -157,7 +169,7 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command moveUp() { 
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.UP_SPEED),
+            () -> hoodServo.set(HoodConstants.UP_SPEED),
             this::stop,
             this
         );
