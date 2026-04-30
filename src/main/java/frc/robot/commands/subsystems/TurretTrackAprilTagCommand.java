@@ -5,6 +5,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
+import frc.robot.subsystems.turret.HoodSubsystem;
+import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
@@ -13,11 +15,18 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 public class TurretTrackAprilTagCommand extends Command
 {
   private final TurretRotationSubsystem turret;
+  private final HoodSubsystem hood;
+  private final TurretFlywheelSubsystem flywheel;
 
-  public TurretTrackAprilTagCommand(TurretRotationSubsystem turret)
+  public TurretTrackAprilTagCommand(
+      TurretRotationSubsystem turret,
+      HoodSubsystem hood,
+      TurretFlywheelSubsystem flywheel)
   {
     this.turret = turret;
-    addRequirements(turret);
+    this.hood = hood;
+    this.flywheel = flywheel;
+    addRequirements(turret, hood, flywheel);
   }
 
   @Override
@@ -28,13 +37,25 @@ public class TurretTrackAprilTagCommand extends Command
     if (target == null)
     {
       turret.stop();
+      hood.clearTargetAngle();
+      hood.stop();
+      flywheel.stop();
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
+      SmartDashboard.putNumber("Turret/TrackingDistanceMeters", -1.0);
       return;
     }
 
     SmartDashboard.putBoolean("Turret/TrackingTagFound", true);
     SmartDashboard.putNumber("Turret/TrackedTagId", target.getFiducialId());
     SmartDashboard.putNumber("Turret/TrackedTagYawDeg", target.getYaw());
+    double distanceMeters = target.getBestCameraToTarget().getTranslation().getNorm();
+    SmartDashboard.putNumber("Turret/TrackingDistanceMeters", distanceMeters);
+    hood.setTargetAngleFromDistance(distanceMeters);
+    SmartDashboard.putNumber("Hood/LookupDistanceMeters", distanceMeters);
+    SmartDashboard.putNumber("Hood/LookupTargetAngle", hood.getLookupAngle(distanceMeters));
+    flywheel.setRPMFromDistance(distanceMeters);
+    SmartDashboard.putNumber("Flywheel/LookupDistanceMeters", distanceMeters);
+    SmartDashboard.putNumber("Flywheel/LookupTargetRPM", flywheel.getLookupRPM(distanceMeters));
 
     double yawErrorDeg = target.getYaw();
     if (Math.abs(yawErrorDeg) <= Constants.VisionConstants.TURRET_AIM_TOLERANCE_DEG)
@@ -98,12 +119,6 @@ public class TurretTrackAprilTagCommand extends Command
 
   private PhotonPipelineResult getLatestCameraResult()
   {
-    var unread = Cameras.TURRET_CAM.camera.getAllUnreadResults();
-    if (!unread.isEmpty())
-    {
-      return unread.get(unread.size() - 1);
-    }
-
     return Cameras.TURRET_CAM.camera.getLatestResult();
   }
 
@@ -123,6 +138,9 @@ public class TurretTrackAprilTagCommand extends Command
   public void end(boolean interrupted)
   {
     turret.stop();
+    hood.clearTargetAngle();
+    hood.stop();
+    flywheel.stop();
   }
 
   @Override
