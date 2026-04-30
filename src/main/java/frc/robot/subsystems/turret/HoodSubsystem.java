@@ -124,13 +124,15 @@ public class HoodSubsystem extends SubsystemBase {
         double rawAngle = getContinuousRawAngleDeg();
         double direction = HoodConstants.ENCODER_INVERTED ? -1.0 : 1.0;
         double angle = (rawAngle - zeroOffsetDeg) * direction;
+        return angle;
+    }
 
     public boolean isEncoderConnected() {
         return hoodEncoder.isConnected();
     }
 
     public void zeroAngleToCurrentPosition() {
-        zeroOffsetDeg = getRawEncoderAngleDegrees();
+        zeroOffsetDeg = getContinuousRawAngleDeg();
     }
 
     public void setZeroOffsetDegrees(double zeroOffsetDeg) {

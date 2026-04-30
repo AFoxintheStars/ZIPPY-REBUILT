@@ -39,7 +39,6 @@ public class TurretTrackAprilTagCommand extends Command
       turret.stop();
       hood.clearTargetAngle();
       hood.stop();
-      flywheel.stop();
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
       SmartDashboard.putNumber("Turret/TrackingDistanceMeters", -1.0);
       return;
@@ -140,7 +139,6 @@ public class TurretTrackAprilTagCommand extends Command
     turret.stop();
     hood.clearTargetAngle();
     hood.stop();
-    flywheel.stop();
   }
 
   @Override
