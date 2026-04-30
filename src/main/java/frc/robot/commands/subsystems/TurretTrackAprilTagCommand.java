@@ -119,12 +119,6 @@ public class TurretTrackAprilTagCommand extends Command
 
   private PhotonPipelineResult getLatestCameraResult()
   {
-    var unread = Cameras.TURRET_CAM.camera.getAllUnreadResults();
-    if (!unread.isEmpty())
-    {
-      return unread.get(unread.size() - 1);
-    }
-
     return Cameras.TURRET_CAM.camera.getLatestResult();
   }
 

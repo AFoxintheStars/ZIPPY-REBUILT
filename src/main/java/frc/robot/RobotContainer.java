@@ -136,6 +136,7 @@ public class RobotContainer
   public RobotContainer()
   {
     configureBindings();
+    turret.setDefaultCommand(turretTrackAprilTag);
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -274,7 +275,10 @@ public class RobotContainer
       
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
-      driverXbox.rightTrigger().whileTrue(turretTrackAprilTag);
+      driverXbox.rightTrigger().onTrue(
+          Commands.runOnce(hood::zeroToCurrent)
+              .alongWith(RumbleTypes.tap(driverXbox))
+      );
 
       driverXbox.povUp().whileTrue(
           hood.moveUp()
