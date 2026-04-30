@@ -43,6 +43,8 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
     /* ==================== CONSTRUCTOR ==================== */
     public TurretFlywheelSubsystem() {
         configureMotor();
+        SmartDashboard.putData("Flywheel/ReloadShooterLookup",
+            Commands.runOnce(this::reloadShooterLookupTable, this));
     }
 
     @SuppressWarnings("removal")
@@ -95,6 +97,15 @@ public class TurretFlywheelSubsystem extends SubsystemBase {
 
     public void setRPMFromDistance(double distanceMeters) {
         setRPM(getLookupRPM(distanceMeters));
+    }
+
+    public void reloadShooterLookupTable() {
+        NavigableMap<Double, ShotData> reloaded =
+            ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
+        if (!reloaded.isEmpty()) {
+            shooterLookupTable.clear();
+            shooterLookupTable.putAll(reloaded);
+        }
     }
 
     public void adjustRPM(double delta) {
