@@ -42,6 +42,8 @@ public class HoodSubsystem extends SubsystemBase {
 
         SmartDashboard.putData("Hood/ZeroToCurrent",
             Commands.runOnce(this::zeroAngleToCurrentPosition, this));
+        SmartDashboard.putData("Hood/ReloadShooterLookup",
+            Commands.runOnce(this::reloadShooterLookupTable, this));
     }
 
     /* ==================== CONTROL ==================== */
@@ -175,6 +177,16 @@ public class HoodSubsystem extends SubsystemBase {
             this::stop,
             this
         );
+    }
+
+
+    public void reloadShooterLookupTable() {
+        NavigableMap<Double, ShotData> reloaded =
+            ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
+        if (!reloaded.isEmpty()) {
+            shooterLookupTable.clear();
+            shooterLookupTable.putAll(reloaded);
+        }
     }
 
     /* ==================== TELEMETRY ==================== */
