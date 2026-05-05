@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
@@ -18,10 +19,19 @@ public class TurretTrackAprilTagCommand extends Command
   private final TurretRotationSubsystem turret;
   private final HoodSubsystem hood;
   private final TurretFlywheelSubsystem flywheel;
+  private final LoggedTunableNumber turretTrackKp =
+      new LoggedTunableNumber("TurretTrack/kP", Constants.VisionConstants.TURRET_TRACK_PID_KP);
+  private final LoggedTunableNumber turretTrackKi =
+      new LoggedTunableNumber("TurretTrack/kI", Constants.VisionConstants.TURRET_TRACK_PID_KI);
+  private final LoggedTunableNumber turretTrackKd =
+      new LoggedTunableNumber("TurretTrack/kD", Constants.VisionConstants.TURRET_TRACK_PID_KD);
+  private final LoggedTunableNumber turretTrackMaxSpeed =
+      new LoggedTunableNumber("TurretTrack/MaxSpeed", Constants.VisionConstants.TURRET_TRACK_MAX_SPEED);
+
   private final PIDController turretAimPid = new PIDController(
-      Constants.VisionConstants.TURRET_TRACK_PID_KP,
-      Constants.VisionConstants.TURRET_TRACK_PID_KI,
-      Constants.VisionConstants.TURRET_TRACK_PID_KD);
+      turretTrackKp.get(),
+      turretTrackKi.get(),
+      turretTrackKd.get());
 
   public TurretTrackAprilTagCommand(
       TurretRotationSubsystem turret,
@@ -39,6 +49,13 @@ public class TurretTrackAprilTagCommand extends Command
   @Override
   public void execute()
   {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> turretAimPid.setPID(turretTrackKp.get(), turretTrackKi.get(), turretTrackKd.get()),
+        turretTrackKp,
+        turretTrackKi,
+        turretTrackKd);
+
     PhotonTrackedTarget target = getBestAllianceTarget();
 
     if (target == null)
@@ -73,8 +90,8 @@ public class TurretTrackAprilTagCommand extends Command
     }
 
     double speedCmd = turretAimPid.calculate(yawErrorDeg, 0.0);
-    speedCmd = Math.max(-Constants.VisionConstants.TURRET_TRACK_MAX_SPEED,
-                        Math.min(Constants.VisionConstants.TURRET_TRACK_MAX_SPEED, speedCmd));
+    speedCmd = Math.max(-turretTrackMaxSpeed.get(),
+                        Math.min(turretTrackMaxSpeed.get(), speedCmd));
 
     boolean tryingPastRight = speedCmd > 0 && turret.atRightLimit();
     boolean tryingPastLeft  = speedCmd < 0 && turret.atLeftLimit();
