@@ -1,5 +1,6 @@
 package frc.robot.commands.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,6 +18,10 @@ public class TurretTrackAprilTagCommand extends Command
   private final TurretRotationSubsystem turret;
   private final HoodSubsystem hood;
   private final TurretFlywheelSubsystem flywheel;
+  private final PIDController turretAimPid = new PIDController(
+      Constants.VisionConstants.TURRET_TRACK_PID_KP,
+      Constants.VisionConstants.TURRET_TRACK_PID_KI,
+      Constants.VisionConstants.TURRET_TRACK_PID_KD);
 
   public TurretTrackAprilTagCommand(
       TurretRotationSubsystem turret,
@@ -26,6 +31,8 @@ public class TurretTrackAprilTagCommand extends Command
     this.turret = turret;
     this.hood = hood;
     this.flywheel = flywheel;
+    turretAimPid.setTolerance(Constants.VisionConstants.TURRET_AIM_TOLERANCE_DEG);
+    turretAimPid.setIntegratorRange(-0.2, 0.2);
     addRequirements(turret, hood, flywheel);
   }
 
@@ -37,6 +44,7 @@ public class TurretTrackAprilTagCommand extends Command
     if (target == null)
     {
       turret.stop();
+      turretAimPid.reset();
       hood.clearTargetAngle();
       hood.stop();
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
@@ -60,11 +68,11 @@ public class TurretTrackAprilTagCommand extends Command
     if (Math.abs(yawErrorDeg) <= Constants.VisionConstants.TURRET_AIM_TOLERANCE_DEG)
     {
       turret.stop();
+      turretAimPid.reset();
       return;
     }
 
-    double speedCmd = yawErrorDeg * Constants.VisionConstants.TURRET_TRACK_KP;
-    speedCmd += Math.copySign(Constants.VisionConstants.TURRET_TRACK_KS, speedCmd);
+    double speedCmd = turretAimPid.calculate(yawErrorDeg, 0.0);
     speedCmd = Math.max(-Constants.VisionConstants.TURRET_TRACK_MAX_SPEED,
                         Math.min(Constants.VisionConstants.TURRET_TRACK_MAX_SPEED, speedCmd));
 
@@ -74,6 +82,7 @@ public class TurretTrackAprilTagCommand extends Command
     if (tryingPastRight || tryingPastLeft)
     {
       turret.stop();
+      turretAimPid.reset();
       SmartDashboard.putBoolean("Turret/TrackingAtSoftLimit", true);
       return;
     }
@@ -137,6 +146,7 @@ public class TurretTrackAprilTagCommand extends Command
   public void end(boolean interrupted)
   {
     turret.stop();
+    turretAimPid.reset();
     hood.clearTargetAngle();
     hood.stop();
   }
