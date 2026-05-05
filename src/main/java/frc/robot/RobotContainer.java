@@ -42,7 +42,8 @@ import swervelib.SwerveInputStream;
 public class RobotContainer
 {
   final         CommandXboxController driverXbox = new CommandXboxController(0);
-  final        CommandJoystick operatorJoystick = new CommandJoystick(1);
+  final         CommandJoystick operatorJoystick = new CommandJoystick(1);
+  final         CommandXboxController banana = new CommandXboxController(2);
 
   private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
@@ -318,6 +319,10 @@ public class RobotContainer
   
         operatorJoystick.povLeft().whileTrue(turret.rotateLeft());
         operatorJoystick.povRight().whileTrue(turret.rotateRight());
+
+        banana.povUp().whileTrue(
+            prefeed.intake()
+        );
     }
 
   }

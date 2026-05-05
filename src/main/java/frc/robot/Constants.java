@@ -95,11 +95,11 @@ public static final class FlywheelConstants
 
     public static final IdleMode IDLE_MODE = IdleMode.kCoast;
 
-    public static final double kP = 0.0002;
+    public static final double kP = 0.00001;
     public static final double kI = 0.0;
     public static final double kD = 0.0;
-    public static final double kFF = 0.00018;
-
+    public static final double kFF = 0.00115;
+  
     public static final double MIN_RPM = 1000;
     public static final double MAX_RPM = 8000;
 
@@ -115,8 +115,6 @@ public static final class HoodConstants {
     public static final int SERVO_PORT = 0;
     public static final int ENCODER_PORT = 3;
 
-    // Speeds are expressed in "angle space":
-    // +speed => increase hood angle, -speed => decrease hood angle.
     public static final double DOWN_SPEED = -1.0;
     public static final double UP_SPEED = 1.0;
 
@@ -128,7 +126,7 @@ public static final class HoodConstants {
     public static final double DEGREES_PER_ENCODER_ROTATION =
         360.0 * (PINION_TEETH / RACK_EQUIVALENT_TEETH);
 
-    public static final double ZERO_OFFSET = 207.0;
+    public static final double ZERO_OFFSET = 720.08;
     public static final boolean ENCODER_INVERTED = true;
     public static final boolean SERVO_INVERTED = true;
 
@@ -153,11 +151,11 @@ public static final class HoodConstants {
 
 public static final class VisionConstants {
 
-    public static final int[] BLUE_HUB_TAGS = {14, 4, 2, 10, 5};
+    public static final int[] BLUE_HUB_TAGS = {14, 4, 2, 10, 5, 31};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
 
     public static final double TURRET_TRACK_KP = 0.001;
-    public static final double TURRET_TRACK_KS = 0.02;
+    public static final double TURRET_TRACK_KS = 0.0;
     public static final double TURRET_TRACK_MAX_SPEED = 0.8;
     public static final double TURRET_AIM_TOLERANCE_DEG = 1.25;
 }
