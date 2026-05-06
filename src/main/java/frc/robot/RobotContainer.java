@@ -26,6 +26,8 @@ import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.subsystems.TurretTrackAprilTagCommand;
+import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
@@ -59,6 +61,8 @@ public class RobotContainer
   private final TurretFlywheelSubsystem flywheel = new TurretFlywheelSubsystem();
 
   private final HoodSubsystem hood = new HoodSubsystem();
+
+  private final LEDSubsystem leds = new LEDSubsystem();
 
   private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret, hood, flywheel);
 
@@ -138,6 +142,7 @@ public class RobotContainer
   {
     configureBindings();
     turret.setDefaultCommand(turretTrackAprilTag);
+    leds.setDefaultCommand(Commands.run(() -> leds.setMode(LEDMode.IDLE), leds));
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -172,6 +177,11 @@ public class RobotContainer
     RobotModeTriggers.autonomous().onTrue(
         Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
     );
+
+    new Trigger(() -> SmartDashboard.getBoolean("Turret/TrackingTagFound", false))
+        .whileTrue(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING));
+
+    RobotModeTriggers.disabled().whileTrue(leds.disabledCommand());
   }
 
   /**
@@ -240,6 +250,7 @@ public class RobotContainer
 
       driverXbox.leftBumper().toggleOnTrue(
           intake.intakeCommand()
+              .alongWith(leds.holdModeCommand(LEDMode.INTAKE_ACTIVE))
               .alongWith(RumbleTypes.strongHold(driverXbox))
       );
 
@@ -260,6 +271,7 @@ public class RobotContainer
  
       driverXbox.button(8).toggleOnTrue(
           prefeed.intake()
+              .alongWith(leds.holdModeCommand(LEDMode.PREFEED_ACTIVE))
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
@@ -277,7 +289,12 @@ public class RobotContainer
       driverXbox.povLeft().whileTrue(turret.rotateLeft());
       driverXbox.povRight().whileTrue(turret.rotateRight());
       driverXbox.rightTrigger().onTrue(
-          Commands.runOnce(hood::zeroToCurrent)
+          leds.cycleIdleColorPatternCommand()
+              .alongWith(RumbleTypes.tap(driverXbox))
+      );
+
+      driverXbox.button(10).onTrue(
+          leds.cycleIdlePatternCommand()
               .alongWith(RumbleTypes.tap(driverXbox))
       );
 
