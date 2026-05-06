@@ -13,21 +13,29 @@ import frc.robot.Constants;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LEDMode {
-    RAINBOW,
+    IDLE,
     CAN_FAULT,
     INTAKE_ACTIVE,
     PREFEED_ACTIVE,
     WAITING_FOR_RADIO,
     APRILTAG_TRACKING,
-    IDLE_WAVE,
-    SHOOT_READY,
-    CLIMB_WARNING
+    DISABLED
+  }
+
+  public enum IdlePattern {
+    RAINBOW,
+    SOLID_RED,
+    SOLID_WHITE,
+    SOLID_BLUE,
+    TEAM_COLORS,
+    BREATHING_WHITE
   }
 
   private final AddressableLED led = new AddressableLED(Constants.LED.PWM_PORT);
   private final AddressableLEDBuffer buffer = new AddressableLEDBuffer(Constants.LED.LED_COUNT);
 
-  private LEDMode currentMode = LEDMode.RAINBOW;
+  private LEDMode currentMode = LEDMode.IDLE;
+  private IdlePattern idlePattern = IdlePattern.RAINBOW;
   private double animationOffset = 0.0;
 
   public LEDSubsystem() {
@@ -36,16 +44,37 @@ public class LEDSubsystem extends SubsystemBase {
     led.start();
   }
 
-  public void setMode(LEDMode mode) {
-    currentMode = mode;
+  public void setMode(LEDMode mode) { currentMode = mode; }
+  public void cycleIdlePattern() {
+    IdlePattern[] patterns = IdlePattern.values();
+    idlePattern = patterns[(idlePattern.ordinal() + 1) % patterns.length];
   }
 
-  public Command setModeCommand(LEDMode mode) {
-    return Commands.runOnce(() -> setMode(mode), this);
+  public void cycleIdleColorPattern() {
+    switch (idlePattern) {
+      case RAINBOW -> idlePattern = IdlePattern.SOLID_RED;
+      case SOLID_RED -> idlePattern = IdlePattern.SOLID_WHITE;
+      case SOLID_WHITE -> idlePattern = IdlePattern.SOLID_BLUE;
+      case SOLID_BLUE -> idlePattern = IdlePattern.TEAM_COLORS;
+      case TEAM_COLORS -> idlePattern = IdlePattern.BREATHING_WHITE;
+      case BREATHING_WHITE -> idlePattern = IdlePattern.RAINBOW;
+    }
   }
 
   public Command holdModeCommand(LEDMode mode) {
-    return Commands.startEnd(() -> setMode(mode), () -> setMode(LEDMode.RAINBOW), this);
+    return Commands.startEnd(() -> setMode(mode), () -> setMode(LEDMode.IDLE), this);
+  }
+
+  public Command disabledCommand() {
+    return Commands.run(() -> setMode(LEDMode.DISABLED), this);
+  }
+
+  public Command cycleIdlePatternCommand() {
+    return Commands.runOnce(this::cycleIdlePattern, this);
+  }
+
+  public Command cycleIdleColorPatternCommand() {
+    return Commands.runOnce(this::cycleIdleColorPattern, this);
   }
 
   private boolean hasCanFault() {
@@ -71,80 +100,61 @@ public class LEDSubsystem extends SubsystemBase {
         case INTAKE_ACTIVE -> drawIntakeActive();
         case PREFEED_ACTIVE -> drawPrefeedActive();
         case APRILTAG_TRACKING -> drawAprilTagTracking();
-        case IDLE_WAVE -> drawIdleWave();
-        case SHOOT_READY -> drawShootReady();
-        case CLIMB_WARNING -> drawClimbWarning();
+        case DISABLED -> drawDisabled();
         case CAN_FAULT -> drawCanFault();
         case WAITING_FOR_RADIO -> drawWaitingForRadio();
-        case RAINBOW -> drawRainbow();
+        case IDLE -> drawIdlePattern();
       }
     }
 
     led.setData(buffer);
   }
 
-  private void drawRainbow() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      int hue = (int) ((i * 180.0 / buffer.getLength() + animationOffset) % 180);
-      setScaledHSV(i, hue, 255, 140);
+  private void drawIdlePattern() {
+    switch (idlePattern) {
+      case RAINBOW -> drawRainbow();
+      case SOLID_RED -> fillColor(Color.kRed);
+      case SOLID_WHITE -> fillColor(Color.kWhite);
+      case SOLID_BLUE -> fillColor(Color.kBlue);
+      case TEAM_COLORS -> drawTeamColors();
+      case BREATHING_WHITE -> drawBreathingWhite();
     }
   }
+
+  private void drawRainbow() { for (int i=0;i<buffer.getLength();i++) setScaledHSV(i,(int)((i*180.0/buffer.getLength()+animationOffset)%180),255,140); }
 
   private void drawCanFault() {
-    boolean flash = ((int) (Timer.getFPGATimestamp() * 8) % 2) == 0;
-    Color a = flash ? Color.kYellow : Color.kGreen;
-    Color b = flash ? Color.kGreen : Color.kYellow;
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setLED(i, (i % 2 == 0) ? a : b);
-    }
+    boolean yellowFrame = ((int) (Timer.getFPGATimestamp() * 4) % 2) == 0;
+    fillColor(yellowFrame ? Color.kYellow : Color.kGreen);
   }
 
-  private void drawIntakeActive() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      boolean on = ((i + (int) animationOffset) % 6) < 3;
-      buffer.setLED(i, on ? Color.kOrangeRed : Color.kBlack);
-    }
-  }
-
-  private void drawPrefeedActive() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      boolean on = ((i - (int) animationOffset) % 8 + 8) % 8 < 2;
-      buffer.setLED(i, on ? Color.kPurple : Color.kBlack);
-    }
-  }
+  private void drawIntakeActive() { for (int i=0;i<buffer.getLength();i++) buffer.setLED(i,((i+(int)animationOffset)%6)<3?Color.kOrangeRed:Color.kBlack); }
+  private void drawPrefeedActive() { for (int i=0;i<buffer.getLength();i++) buffer.setLED(i,((i-(int)animationOffset)%8+8)%8<2?Color.kPurple:Color.kBlack); }
 
   private void drawWaitingForRadio() {
     double pulse = (Math.sin(Timer.getFPGATimestamp() * 3.0) + 1.0) * 0.5;
-    int value = (int) (pulse * 180);
-    for (int i = 0; i < buffer.getLength(); i++) {
-      setScaledHSV(i, 120, 255, value);
-    }
-  }
-
-  private void drawIdleWave() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      double wave = (Math.sin((i * 0.4) + (animationOffset * 0.15)) + 1.0) * 0.5;
-      setScaledHSV(i, 20, 200, (int) (wave * 120));
-    }
+    for (int i = 0; i < buffer.getLength(); i++) setScaledHSV(i, 120, 255, (int) (pulse * 180));
   }
 
   private void drawAprilTagTracking() {
+    boolean flash = ((int) (Timer.getFPGATimestamp() * 10) % 2) == 0;
+    fillColor(flash ? Color.kDeepSkyBlue : Color.kWhite);
+  }
+
+  private void drawTeamColors() {
     for (int i = 0; i < buffer.getLength(); i++) {
-      boolean trackingPixel = ((i + (int) animationOffset) % 10) < 4;
-      buffer.setLED(i, trackingPixel ? Color.kWhite : Color.kDeepSkyBlue);
+      int section = (i * 3) / Math.max(1, buffer.getLength());
+      buffer.setLED(i, section == 0 ? Color.kRed : section == 1 ? Color.kWhite : Color.kBlack);
     }
   }
 
-  private void drawShootReady() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setLED(i, Color.kLimeGreen);
-    }
+  private void drawBreathingWhite() {
+    double pulse = (Math.sin(Timer.getFPGATimestamp() * 2.5) + 1.0) * 0.5;
+    int v = (int) (pulse * 200);
+    for (int i = 0; i < buffer.getLength(); i++) setScaledHSV(i, 0, 0, v);
   }
 
-  private void drawClimbWarning() {
-    boolean flash = ((int) (Timer.getFPGATimestamp() * 12) % 2) == 0;
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setLED(i, flash ? Color.kRed : Color.kBlack);
-    }
-  }
+  private void drawDisabled() { drawTeamColors(); }
+
+  private void fillColor(Color c) { for (int i=0;i<buffer.getLength();i++) buffer.setLED(i,c); }
 }

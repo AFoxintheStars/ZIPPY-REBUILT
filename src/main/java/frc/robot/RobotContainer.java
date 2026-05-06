@@ -142,7 +142,7 @@ public class RobotContainer
   {
     configureBindings();
     turret.setDefaultCommand(turretTrackAprilTag);
-    leds.setDefaultCommand(leds.setModeCommand(LEDMode.RAINBOW).andThen(Commands.idle(leds)));
+    leds.setDefaultCommand(Commands.run(() -> leds.setMode(LEDMode.IDLE), leds));
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -177,6 +177,11 @@ public class RobotContainer
     RobotModeTriggers.autonomous().onTrue(
         Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
     );
+
+    new Trigger(() -> SmartDashboard.getBoolean("Turret/TrackingTagFound", false))
+        .whileTrue(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING));
+
+    RobotModeTriggers.disabled().whileTrue(leds.disabledCommand());
   }
 
   /**
@@ -284,7 +289,12 @@ public class RobotContainer
       driverXbox.povLeft().whileTrue(turret.rotateLeft().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.povRight().whileTrue(turret.rotateRight().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.rightTrigger().onTrue(
-          Commands.runOnce(hood::zeroToCurrent)
+          leds.cycleIdleColorPatternCommand()
+              .alongWith(RumbleTypes.tap(driverXbox))
+      );
+
+      driverXbox.button(10).onTrue(
+          leds.cycleIdlePatternCommand()
               .alongWith(RumbleTypes.tap(driverXbox))
       );
 
