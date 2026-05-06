@@ -286,8 +286,8 @@ public class RobotContainer
       driverXbox.b().whileTrue(slider.set(-0.15));
       driverXbox.x().whileTrue(slider.set(0.15));
       
-      driverXbox.povLeft().whileTrue(turret.rotateLeft());
-      driverXbox.povRight().whileTrue(turret.rotateRight());
+      driverXbox.povLeft().whileTrue(turret.rotateLeft().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
+      driverXbox.povRight().whileTrue(turret.rotateRight().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.rightTrigger().onTrue(
           leds.cycleIdleColorPatternCommand()
               .alongWith(RumbleTypes.tap(driverXbox))
