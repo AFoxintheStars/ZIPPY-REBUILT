@@ -154,9 +154,8 @@ public static final class VisionConstants {
     public static final int[] BLUE_HUB_TAGS = {14, 4, 2, 10, 5, 31};
     public static final int[] RED_HUB_TAGS = {18, 27, 26, 25, 21, 24};
 
-    public static final double TURRET_TRACK_PID_KP = 0.03;
-    public static final double TURRET_TRACK_PID_KI = 0.001;
-    public static final double TURRET_TRACK_PID_KD = 0.006;
+    public static final double TURRET_TRACK_KP = 0.0005;
+    public static final double TURRET_TRACK_KS = 0.02;
     public static final double TURRET_TRACK_MAX_SPEED = 0.8;
     public static final double TURRET_AIM_TOLERANCE_DEG = 1.25;
 }

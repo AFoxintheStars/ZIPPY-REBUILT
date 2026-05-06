@@ -1,15 +1,14 @@
 package frc.robot.commands.subsystems;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.swervedrive.Vision.Cameras;
-import frc.robot.util.LoggedTunableNumber;
 import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
+
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -19,19 +18,6 @@ public class TurretTrackAprilTagCommand extends Command
   private final TurretRotationSubsystem turret;
   private final HoodSubsystem hood;
   private final TurretFlywheelSubsystem flywheel;
-  private final LoggedTunableNumber turretTrackKp =
-      new LoggedTunableNumber("TurretTrack/kP", Constants.VisionConstants.TURRET_TRACK_PID_KP);
-  private final LoggedTunableNumber turretTrackKi =
-      new LoggedTunableNumber("TurretTrack/kI", Constants.VisionConstants.TURRET_TRACK_PID_KI);
-  private final LoggedTunableNumber turretTrackKd =
-      new LoggedTunableNumber("TurretTrack/kD", Constants.VisionConstants.TURRET_TRACK_PID_KD);
-  private final LoggedTunableNumber turretTrackMaxSpeed =
-      new LoggedTunableNumber("TurretTrack/MaxSpeed", Constants.VisionConstants.TURRET_TRACK_MAX_SPEED);
-
-  private final PIDController turretAimPid = new PIDController(
-      turretTrackKp.get(),
-      turretTrackKi.get(),
-      turretTrackKd.get());
 
   public TurretTrackAprilTagCommand(
       TurretRotationSubsystem turret,
@@ -41,27 +27,17 @@ public class TurretTrackAprilTagCommand extends Command
     this.turret = turret;
     this.hood = hood;
     this.flywheel = flywheel;
-    turretAimPid.setTolerance(Constants.VisionConstants.TURRET_AIM_TOLERANCE_DEG);
-    turretAimPid.setIntegratorRange(-0.2, 0.2);
     addRequirements(turret, hood, flywheel);
   }
 
   @Override
   public void execute()
   {
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> turretAimPid.setPID(turretTrackKp.get(), turretTrackKi.get(), turretTrackKd.get()),
-        turretTrackKp,
-        turretTrackKi,
-        turretTrackKd);
-
     PhotonTrackedTarget target = getBestAllianceTarget();
 
     if (target == null)
     {
       turret.stop();
-      turretAimPid.reset();
       hood.clearTargetAngle();
       hood.stop();
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
@@ -85,13 +61,13 @@ public class TurretTrackAprilTagCommand extends Command
     if (Math.abs(yawErrorDeg) <= Constants.VisionConstants.TURRET_AIM_TOLERANCE_DEG)
     {
       turret.stop();
-      turretAimPid.reset();
       return;
     }
 
-    double speedCmd = turretAimPid.calculate(yawErrorDeg, 0.0);
-    speedCmd = Math.max(-turretTrackMaxSpeed.get(),
-                        Math.min(turretTrackMaxSpeed.get(), speedCmd));
+    double speedCmd = yawErrorDeg * Constants.VisionConstants.TURRET_TRACK_KP;
+    speedCmd += Math.copySign(Constants.VisionConstants.TURRET_TRACK_KS, speedCmd);
+    speedCmd = Math.max(-Constants.VisionConstants.TURRET_TRACK_MAX_SPEED,
+                        Math.min(Constants.VisionConstants.TURRET_TRACK_MAX_SPEED, speedCmd));
 
     boolean tryingPastRight = speedCmd > 0 && turret.atRightLimit();
     boolean tryingPastLeft  = speedCmd < 0 && turret.atLeftLimit();
@@ -99,7 +75,6 @@ public class TurretTrackAprilTagCommand extends Command
     if (tryingPastRight || tryingPastLeft)
     {
       turret.stop();
-      turretAimPid.reset();
       SmartDashboard.putBoolean("Turret/TrackingAtSoftLimit", true);
       return;
     }
@@ -163,7 +138,6 @@ public class TurretTrackAprilTagCommand extends Command
   public void end(boolean interrupted)
   {
     turret.stop();
-    turretAimPid.reset();
     hood.clearTargetAngle();
     hood.stop();
   }
