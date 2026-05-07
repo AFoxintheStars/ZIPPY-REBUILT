@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.subsystems.TurretTrackAprilTagCommand;
 import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.LEDSubsystem.IdlePattern;
 import frc.robot.subsystems.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
@@ -142,7 +143,7 @@ public class RobotContainer
   {
     configureBindings();
     turret.setDefaultCommand(turretTrackAprilTag);
-    leds.setDefaultCommand(Commands.run(() -> leds.setMode(LEDMode.IDLE), leds));
+    leds.setDefaultCommand(leds.setModeCommand(LEDMode.IDLE).andThen(Commands.idle(leds)));
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -177,11 +178,6 @@ public class RobotContainer
     RobotModeTriggers.autonomous().onTrue(
         Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
     );
-
-    new Trigger(() -> SmartDashboard.getBoolean("Turret/TrackingTagFound", false))
-        .whileTrue(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING));
-
-    RobotModeTriggers.disabled().whileTrue(leds.disabledCommand());
   }
 
   /**
@@ -279,7 +275,6 @@ public class RobotContainer
           prefeed.outtake()
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
-
       
       // driverXbox.x().whileTrue(slider.setHeight(Meters.of(0.15)));
       // driverXbox.b().whileTrue(slider.setHeight(Meters.of(0)));
@@ -289,12 +284,7 @@ public class RobotContainer
       driverXbox.povLeft().whileTrue(turret.rotateLeft().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.povRight().whileTrue(turret.rotateRight().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.rightTrigger().onTrue(
-          leds.cycleIdleColorPatternCommand()
-              .alongWith(RumbleTypes.tap(driverXbox))
-      );
-
-      driverXbox.button(10).onTrue(
-          leds.cycleIdlePatternCommand()
+          Commands.runOnce(hood::zeroToCurrent)
               .alongWith(RumbleTypes.tap(driverXbox))
       );
 

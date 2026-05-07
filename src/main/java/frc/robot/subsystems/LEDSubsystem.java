@@ -61,6 +61,10 @@ public class LEDSubsystem extends SubsystemBase {
     }
   }
 
+  public Command setModeCommand(LEDMode mode) {
+    return Commands.runOnce(() -> setMode(mode), this);
+  }
+
   public Command holdModeCommand(LEDMode mode) {
     return Commands.startEnd(() -> setMode(mode), () -> setMode(LEDMode.IDLE), this);
   }
