@@ -285,44 +285,6 @@ public class LEDSubsystem extends SubsystemBase {
     return new Color(base.red * clampedScalar, base.green * clampedScalar, base.blue * clampedScalar);
   }
 
-  private void drawChase() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      int phase = (i - (int) animationOffset) % 6;
-      if (phase < 0) phase += 6;
-      buffer.setLED(i, phase < 3 ? Color.kDodgerBlue : Color.kBlack);
-    }
-  }
-
-  private void drawKnightRider() {
-    int maxIndex = Math.max(1, buffer.getLength() - 1);
-    int period = maxIndex * 2;
-    int frame = ((int) animationOffset) % period;
-    int index = frame <= maxIndex ? frame : period - frame;
-    fillColor(Color.kBlack);
-    buffer.setLED(index, Color.kRed);
-  }
-
-  private void drawStrobe() {
-    boolean on = ((int) (Timer.getFPGATimestamp() * 20) % 2) == 0;
-    fillColor(on ? Color.kWhite : Color.kBlack);
-  }
-
-  private void drawTheaterChase() {
-    int shift = ((int) animationOffset) % 3;
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setLED(i, ((i + shift) % 3 == 0) ? Color.kPurple : Color.kBlack);
-    }
-  }
-
-  private void drawSparkle() {
-    fillColor(Color.kBlack);
-    int sparkleCount = Math.max(1, buffer.getLength() / 8);
-    for (int i = 0; i < sparkleCount; i++) {
-      int index = (int) (Math.random() * buffer.getLength());
-      buffer.setLED(index, Color.kWhite);
-    }
-  }
-
   private void drawDisabled() { drawTeamColors(); }
 
   private void fillColor(Color c) { for (int i=0;i<buffer.getLength();i++) buffer.setLED(i,c); }
