@@ -29,7 +29,13 @@ public class LEDSubsystem extends SubsystemBase {
     SOLID_WHITE,
     SOLID_BLUE,
     TEAM_COLORS,
-    BREATHING_WHITE
+    BREATHING_WHITE,
+    CHASE,
+    KNIGHT_RIDER,
+    STROBE,
+    THEATER_CHASE,
+    SPARKLE,
+    CUSTOM_RGB
   }
 
   private final AddressableLED led = new AddressableLED(Constants.LED.PWM_PORT);
@@ -42,6 +48,7 @@ public class LEDSubsystem extends SubsystemBase {
   private int lastCanRxErrors = 0;
   private int lastCanBusOff = 0;
   private double lastCanFaultTimestamp = -1.0;
+  private Color customColor = Color.kWhite;
 
   public LEDSubsystem() {
     led.setLength(buffer.getLength());
@@ -68,6 +75,31 @@ public class LEDSubsystem extends SubsystemBase {
       case TEAM_COLORS -> idlePattern = IdlePattern.BREATHING_WHITE;
       case BREATHING_WHITE -> idlePattern = IdlePattern.RAINBOW;
     }
+  }
+
+  public void setIdlePattern(IdlePattern pattern) {
+    idlePattern = pattern;
+    currentMode = LEDMode.IDLE;
+  }
+
+  public Command setIdlePatternCommand(IdlePattern pattern) {
+    return Commands.runOnce(() -> setIdlePattern(pattern), this);
+  }
+
+  public void setCustomColor(int r, int g, int b) {
+    customColor = new Color(
+        clampColorChannel(r) / 255.0,
+        clampColorChannel(g) / 255.0,
+        clampColorChannel(b) / 255.0);
+    setIdlePattern(IdlePattern.CUSTOM_RGB);
+  }
+
+  private int clampColorChannel(int value) {
+    return Math.max(0, Math.min(255, value));
+  }
+
+  public Command setCustomColorCommand(int r, int g, int b) {
+    return Commands.runOnce(() -> setCustomColor(r, g, b), this);
   }
 
   public Command holdModeCommand(LEDMode mode) {
@@ -164,6 +196,12 @@ public class LEDSubsystem extends SubsystemBase {
       case SOLID_BLUE -> fillColor(Color.kBlue);
       case TEAM_COLORS -> drawTeamColors();
       case BREATHING_WHITE -> drawBreathingWhite();
+      case CHASE -> drawChase();
+      case KNIGHT_RIDER -> drawKnightRider();
+      case STROBE -> drawStrobe();
+      case THEATER_CHASE -> drawTheaterChase();
+      case SPARKLE -> drawSparkle();
+      case CUSTOM_RGB -> fillColor(customColor);
     }
   }
 
@@ -197,6 +235,44 @@ public class LEDSubsystem extends SubsystemBase {
     double pulse = (Math.sin(Timer.getFPGATimestamp() * 2.5) + 1.0) * 0.5;
     int v = (int) (pulse * 200);
     for (int i = 0; i < buffer.getLength(); i++) setScaledHSV(i, 0, 0, v);
+  }
+
+  private void drawChase() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      int phase = (i - (int) animationOffset) % 6;
+      if (phase < 0) phase += 6;
+      buffer.setLED(i, phase < 3 ? Color.kDodgerBlue : Color.kBlack);
+    }
+  }
+
+  private void drawKnightRider() {
+    int maxIndex = Math.max(1, buffer.getLength() - 1);
+    int period = maxIndex * 2;
+    int frame = ((int) animationOffset) % period;
+    int index = frame <= maxIndex ? frame : period - frame;
+    fillColor(Color.kBlack);
+    buffer.setLED(index, Color.kRed);
+  }
+
+  private void drawStrobe() {
+    boolean on = ((int) (Timer.getFPGATimestamp() * 20) % 2) == 0;
+    fillColor(on ? Color.kWhite : Color.kBlack);
+  }
+
+  private void drawTheaterChase() {
+    int shift = ((int) animationOffset) % 3;
+    for (int i = 0; i < buffer.getLength(); i++) {
+      buffer.setLED(i, ((i + shift) % 3 == 0) ? Color.kPurple : Color.kBlack);
+    }
+  }
+
+  private void drawSparkle() {
+    fillColor(Color.kBlack);
+    int sparkleCount = Math.max(1, buffer.getLength() / 8);
+    for (int i = 0; i < sparkleCount; i++) {
+      int index = (int) (Math.random() * buffer.getLength());
+      buffer.setLED(index, Color.kWhite);
+    }
   }
 
   private void drawDisabled() { drawTeamColors(); }
