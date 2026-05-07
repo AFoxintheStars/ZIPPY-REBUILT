@@ -163,7 +163,7 @@ public static final class VisionConstants {
 
 
   public static final class LED {
-    public static final int LED_COUNT = 90;
+    public static final int LED_COUNT = 123;
     public static final double BRIGHTNESS = 0.25;
     public static final int PWM_PORT = 1;
   }
