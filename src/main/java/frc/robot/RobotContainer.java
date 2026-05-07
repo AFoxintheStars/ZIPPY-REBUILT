@@ -23,11 +23,9 @@ import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.subsystems.TurretTrackAprilTagCommand;
 import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.LEDSubsystem.IdlePattern;
 import frc.robot.subsystems.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
@@ -143,7 +141,7 @@ public class RobotContainer
   {
     configureBindings();
     turret.setDefaultCommand(turretTrackAprilTag);
-    leds.setDefaultCommand(leds.setModeCommand(LEDMode.IDLE).andThen(Commands.idle(leds)));
+    leds.setDefaultCommand(Commands.run(() -> leds.setMode(LEDMode.IDLE), leds));
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -178,6 +176,9 @@ public class RobotContainer
     RobotModeTriggers.autonomous().onTrue(
         Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
     );
+
+
+    RobotModeTriggers.disabled().whileTrue(leds.disabledCommand());
   }
 
   /**
@@ -284,7 +285,12 @@ public class RobotContainer
       driverXbox.povLeft().whileTrue(turret.rotateLeft().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.povRight().whileTrue(turret.rotateRight().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
       driverXbox.rightTrigger().onTrue(
-          Commands.runOnce(hood::zeroToCurrent)
+          leds.cycleIdleColorPatternCommand()
+              .alongWith(RumbleTypes.tap(driverXbox))
+      );
+
+      driverXbox.button(10).onTrue(
+          leds.cycleIdlePatternCommand()
               .alongWith(RumbleTypes.tap(driverXbox))
       );
 

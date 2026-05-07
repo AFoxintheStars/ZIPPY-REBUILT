@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.subsystems.swervedrive.Vision.Cameras;
 
 public class LEDSubsystem extends SubsystemBase {
   public enum LEDMode {
@@ -37,6 +38,10 @@ public class LEDSubsystem extends SubsystemBase {
   private LEDMode currentMode = LEDMode.IDLE;
   private IdlePattern idlePattern = IdlePattern.RAINBOW;
   private double animationOffset = 0.0;
+  private int lastCanTxErrors = 0;
+  private int lastCanRxErrors = 0;
+  private int lastCanBusOff = 0;
+  private double lastCanFaultTimestamp = -1.0;
 
   public LEDSubsystem() {
     led.setLength(buffer.getLength());
@@ -45,6 +50,10 @@ public class LEDSubsystem extends SubsystemBase {
   }
 
   public void setMode(LEDMode mode) { currentMode = mode; }
+
+  public Command setModeCommand(LEDMode mode) {
+    return Commands.runOnce(() -> setMode(mode), this);
+  }
   public void cycleIdlePattern() {
     IdlePattern[] patterns = IdlePattern.values();
     idlePattern = patterns[(idlePattern.ordinal() + 1) % patterns.length];
@@ -59,10 +68,6 @@ public class LEDSubsystem extends SubsystemBase {
       case TEAM_COLORS -> idlePattern = IdlePattern.BREATHING_WHITE;
       case BREATHING_WHITE -> idlePattern = IdlePattern.RAINBOW;
     }
-  }
-
-  public Command setModeCommand(LEDMode mode) {
-    return Commands.runOnce(() -> setMode(mode), this);
   }
 
   public Command holdModeCommand(LEDMode mode) {
@@ -83,7 +88,42 @@ public class LEDSubsystem extends SubsystemBase {
 
   private boolean hasCanFault() {
     var canStatus = RobotController.getCANStatus();
-    return canStatus.transmitErrorCount > 0 || canStatus.receiveErrorCount > 0 || canStatus.busOffCount > 0;
+    boolean newFault = canStatus.transmitErrorCount > lastCanTxErrors
+        || canStatus.receiveErrorCount > lastCanRxErrors
+        || canStatus.busOffCount > lastCanBusOff;
+
+    lastCanTxErrors = canStatus.transmitErrorCount;
+    lastCanRxErrors = canStatus.receiveErrorCount;
+    lastCanBusOff = canStatus.busOffCount;
+
+    if (newFault) {
+      lastCanFaultTimestamp = Timer.getFPGATimestamp();
+    }
+
+    return lastCanFaultTimestamp > 0 && (Timer.getFPGATimestamp() - lastCanFaultTimestamp) < 1.0;
+  }
+
+  private boolean hasAllianceAprilTagTarget() {
+    var latest = Cameras.TURRET_CAM.camera.getLatestResult();
+    if (!latest.hasTargets()) {
+      return false;
+    }
+
+    var alliance = DriverStation.getAlliance();
+    int[] allowed = alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red
+        ? Constants.VisionConstants.RED_HUB_TAGS
+        : Constants.VisionConstants.BLUE_HUB_TAGS;
+
+    for (var target : latest.getTargets()) {
+      int id = target.getFiducialId();
+      for (int tagId : allowed) {
+        if (id == tagId) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private void setScaledHSV(int i, int h, int s, int v) {
@@ -99,6 +139,8 @@ public class LEDSubsystem extends SubsystemBase {
       drawCanFault();
     } else if (!DriverStation.isDSAttached()) {
       drawWaitingForRadio();
+    } else if (hasAllianceAprilTagTarget()) {
+      drawAprilTagTracking();
     } else {
       switch (currentMode) {
         case INTAKE_ACTIVE -> drawIntakeActive();
@@ -147,8 +189,7 @@ public class LEDSubsystem extends SubsystemBase {
 
   private void drawTeamColors() {
     for (int i = 0; i < buffer.getLength(); i++) {
-      int section = (i * 3) / Math.max(1, buffer.getLength());
-      buffer.setLED(i, section == 0 ? Color.kRed : section == 1 ? Color.kWhite : Color.kBlack);
+      buffer.setLED(i, (i % 2 == 0) ? Color.kRed : Color.kWhite);
     }
   }
 
