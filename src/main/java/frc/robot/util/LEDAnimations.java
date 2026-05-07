@@ -1,11 +1,33 @@
 package frc.robot.util;
 
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
 
 public final class LEDAnimations {
   private LEDAnimations() {}
+
+
+  public static void rainbow(AddressableLEDBuffer buffer, double offset) {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      buffer.setHSV(i, (int) ((i * 180.0 / buffer.getLength() + offset) % 180), 255, 140);
+    }
+  }
+
+  public static void knightRider(AddressableLEDBuffer buffer, Color color, double offset) {
+    int max = Math.max(1, buffer.getLength() - 1);
+    int period = max * 2;
+    int frame = ((int) offset) % period;
+    int index = frame <= max ? frame : period - frame;
+    fill(buffer, Color.kBlack);
+    buffer.setLED(index, color);
+  }
+
+  public static void sparkle(AddressableLEDBuffer buffer, Color color) {
+    fill(buffer, Color.kBlack);
+    for (int i = 0; i < Math.max(1, buffer.getLength() / 8); i++) {
+      buffer.setLED((int) (Math.random() * buffer.getLength()), color);
+    }
+  }
 
   public static void fill(AddressableLEDBuffer buffer, Color color) {
     for (int i = 0; i < buffer.getLength(); i++) {

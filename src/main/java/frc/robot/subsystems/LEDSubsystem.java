@@ -40,9 +40,9 @@ public class LEDSubsystem extends SubsystemBase {
     led.setData(buffer);
     led.start();
 
-    SmartDashboard.putNumber("LED/CustomR", 255);
-    SmartDashboard.putNumber("LED/CustomG", 255);
-    SmartDashboard.putNumber("LED/CustomB", 255);
+    SmartDashboard.putNumber("LED/Custom R", 255);
+    SmartDashboard.putNumber("LED/Custom G", 255);
+    SmartDashboard.putNumber("LED/Custom B", 255);
     SmartDashboard.putNumber("LED/Brightness", Constants.LED.BRIGHTNESS);
     SmartDashboard.putNumber("LED/AnimationSpeed", 1.0);
   }
@@ -53,6 +53,7 @@ public class LEDSubsystem extends SubsystemBase {
   public Command disabledCommand() { return Commands.run(() -> setMode(LEDMode.DISABLED), this); }
   public Command cycleIdlePatternCommand() { return Commands.runOnce(this::cycleIdlePattern, this); }
   public void cycleIdlePattern() { idlePattern = IdlePattern.values()[(idlePattern.ordinal() + 1) % IdlePattern.values().length]; }
+  public Command setIdlePatternCommand(IdlePattern pattern) { return Commands.runOnce(() -> setIdlePattern(pattern), this); }
 
   public void setIdlePattern(IdlePattern pattern) {
     switch (pattern) {
@@ -95,9 +96,9 @@ public class LEDSubsystem extends SubsystemBase {
     animationOffset += speed;
 
     if (idlePattern == IdlePattern.CUSTOM_RGB) {
-      int r = (int) SmartDashboard.getNumber("LED/CustomR", 255);
-      int g = (int) SmartDashboard.getNumber("LED/CustomG", 255);
-      int b = (int) SmartDashboard.getNumber("LED/CustomB", 255);
+      int r = (int) SmartDashboard.getNumber("LED/Custom R", 255);
+      int g = (int) SmartDashboard.getNumber("LED/Custom G", 255);
+      int b = (int) SmartDashboard.getNumber("LED/Custom B", 255);
       activeColor = LEDColors.fromRGB(r, g, b);
     }
 
@@ -120,15 +121,15 @@ public class LEDSubsystem extends SubsystemBase {
 
   private void drawIdlePattern() {
     switch (idlePattern) {
-      case RAINBOW -> drawRainbow();
+      case RAINBOW -> LEDAnimations.rainbow(buffer, animationOffset);
       case SOLID_RED, SOLID_WHITE, SOLID_BLUE, CUSTOM_RGB -> LEDAnimations.fill(buffer, activeColor);
       case TEAM_COLORS -> drawTeamColors();
       case BREATHING_WHITE -> LEDAnimations.fill(buffer, LEDColors.scale(activeColor, (Math.sin(Timer.getFPGATimestamp() * 2.5) + 1.0) * 0.5));
       case CHASE -> LEDAnimations.chase(buffer, activeColor, animationOffset, 6);
-      case KNIGHT_RIDER -> drawKnightRider();
+      case KNIGHT_RIDER -> LEDAnimations.knightRider(buffer, activeColor, animationOffset);
       case STROBE -> LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 20) % 2) == 0 ? activeColor : Color.kBlack);
       case THEATER_CHASE -> drawTheaterChase();
-      case SPARKLE -> drawSparkle();
+      case SPARKLE -> LEDAnimations.sparkle(buffer, activeColor);
       case FIREWORK -> LEDAnimations.firework(buffer, activeColor, animationOffset);
       case METEOR_RAIN -> LEDAnimations.meteorRain(buffer, activeColor, animationOffset);
       case STACKING -> LEDAnimations.stacking(buffer, activeColor, animationOffset);
@@ -137,37 +138,26 @@ public class LEDSubsystem extends SubsystemBase {
     }
   }
 
-  private void drawRainbow() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setHSV(i, (int) ((i * 180.0 / buffer.getLength() + animationOffset) % 180), 255, 140);
-    }
-  }
-
-  private void drawCanFault() { LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 4) % 2) == 0 ? Color.kYellow : Color.kGreen); }
+  private void drawCanFault() { LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 4) % 2) == 0 ? LEDColors.Palette.YELLOW.color() : LEDColors.Palette.GREEN.color()); }
   private void drawWaitingForRadio() {
     double pulse = (Math.sin(Timer.getFPGATimestamp() * 3.0) + 1.0) * 0.5;
-    for (int i = 0; i < buffer.getLength(); i++) buffer.setHSV(i, 120, 255, (int) (pulse * 180));
+    Color water = LEDColors.scale(LEDColors.Palette.DODGER_BLUE.color(), pulse);
+    LEDAnimations.fill(buffer, water);
   }
-  private void drawAprilTagTracking() { LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 10) % 2) == 0 ? Color.kDeepSkyBlue : Color.kWhite); }
-  private void drawTeamColors() { for (int i = 0; i < buffer.getLength(); i++) buffer.setLED(i, (i % 2 == 0) ? Color.kRed : Color.kWhite); }
-
-  private void drawKnightRider() {
-    int max = Math.max(1, buffer.getLength() - 1);
-    int period = max * 2;
-    int frame = ((int) animationOffset) % period;
-    int index = frame <= max ? frame : period - frame;
-    LEDAnimations.fill(buffer, Color.kBlack);
-    buffer.setLED(index, activeColor);
+  private void drawAprilTagTracking() {
+    LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 10) % 2) == 0
+        ? LEDColors.Palette.DEEP_SKY_BLUE.color()
+        : LEDColors.Palette.WHITE.color());
+  }
+  private void drawTeamColors() {
+    for (int i = 0; i < buffer.getLength(); i++) {
+      buffer.setLED(i, (i % 2 == 0) ? LEDColors.Palette.RED.color() : LEDColors.Palette.WHITE.color());
+    }
   }
 
   private void drawTheaterChase() {
     int shift = ((int) animationOffset) % 3;
     for (int i = 0; i < buffer.getLength(); i++) buffer.setLED(i, ((i + shift) % 3 == 0) ? activeColor : Color.kBlack);
-  }
-
-  private void drawSparkle() {
-    LEDAnimations.fill(buffer, Color.kBlack);
-    for (int i = 0; i < Math.max(1, buffer.getLength() / 8); i++) buffer.setLED((int) (Math.random() * buffer.getLength()), activeColor);
   }
 
   private void applyBrightness() {
