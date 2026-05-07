@@ -203,6 +203,9 @@ public class RobotContainer
             (int) SmartDashboard.getNumber("LED/Custom R", 255),
             (int) SmartDashboard.getNumber("LED/Custom G", 255),
             (int) SmartDashboard.getNumber("LED/Custom B", 255))));
+
+    SmartDashboard.putNumber("LED/Brightness", 0.25);
+    SmartDashboard.putNumber("LED/AnimationSpeed", 1.0);
   }
 
   /**
