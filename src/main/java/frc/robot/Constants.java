@@ -19,7 +19,7 @@ public final class Constants
 public static final double ROBOT_MASS = 131 * 0.453592;
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS);
   public static final double LOOP_TIME  = 0.13;
-  public static final double MAX_SPEED  = Units.feetToMeters(7);
+  public static final double MAX_SPEED  = Units.feetToMeters(8.5);
 
   public static final class DrivebaseConstants
   {
@@ -35,7 +35,7 @@ public static final double ROBOT_MASS = 131 * 0.453592;
 {
     public static final int MOTOR_ID = 11;
 
-    public static final double INTAKE_SPEED = 0.8;
+    public static final double INTAKE_SPEED = 0.6;
     public static final double OUTTAKE_SPEED = -0.8;
     public static final double HOLD_SPEED = 0.1;
 

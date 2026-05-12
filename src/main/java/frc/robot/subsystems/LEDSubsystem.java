@@ -6,165 +6,265 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import frc.robot.Constants;
-import frc.robot.subsystems.swervedrive.Vision.Cameras;
-import frc.robot.util.LEDAnimations;
-import frc.robot.util.LEDColors;
+import frc.robot.led.*;
 
 public class LEDSubsystem extends SubsystemBase {
-  public enum LEDMode { IDLE, CAN_FAULT, INTAKE_ACTIVE, PREFEED_ACTIVE, WAITING_FOR_RADIO, APRILTAG_TRACKING, DISABLED }
 
-  public enum IdlePattern {
-    RAINBOW, SOLID_RED, SOLID_WHITE, SOLID_BLUE, TEAM_COLORS, BREATHING_WHITE, CHASE,
-    KNIGHT_RIDER, STROBE, THEATER_CHASE, SPARKLE, CUSTOM_RGB, FIREWORK, METEOR_RAIN,
-    STACKING, OCEAN_WAVE, SUNRISE_SUNSET
-  }
+    private final AddressableLED led =
+        new AddressableLED(Constants.LED.PWM_PORT);
 
-  private final AddressableLED led = new AddressableLED(Constants.LED.PWM_PORT);
-  private final AddressableLEDBuffer buffer = new AddressableLEDBuffer(Constants.LED.LED_COUNT);
-  private LEDMode currentMode = LEDMode.IDLE;
-  private IdlePattern idlePattern = IdlePattern.RAINBOW;
-  private double animationOffset = 0.0;
-  private Color activeColor = Color.kWhite;
-  private int lastCanTxErrors = 0;
-  private int lastCanRxErrors = 0;
-  private int lastCanBusOff = 0;
-  private double lastCanFaultTimestamp = -1.0;
+    private final AddressableLEDBuffer buffer =
+        new AddressableLEDBuffer(Constants.LED.LED_COUNT);
 
-  public LEDSubsystem() {
-    led.setLength(buffer.getLength());
-    led.setData(buffer);
-    led.start();
+    private final LEDConfig config = new LEDConfig();
 
-    SmartDashboard.putNumber("LED/Custom R", 255);
-    SmartDashboard.putNumber("LED/Custom G", 255);
-    SmartDashboard.putNumber("LED/Custom B", 255);
-    SmartDashboard.putNumber("LED/Brightness", Constants.LED.BRIGHTNESS);
-    SmartDashboard.putNumber("LED/AnimationSpeed", 1.0);
-  }
+    private final LEDRenderer renderer =
+        new LEDRenderer(buffer, config);
 
-  public void setMode(LEDMode mode) { currentMode = mode; }
-  public Command setModeCommand(LEDMode mode) { return Commands.runOnce(() -> setMode(mode), this); }
-  public Command holdModeCommand(LEDMode mode) { return Commands.startEnd(() -> setMode(mode), () -> setMode(LEDMode.IDLE), this); }
-  public Command disabledCommand() { return Commands.run(() -> setMode(LEDMode.DISABLED), this); }
-  public Command cycleIdlePatternCommand() { return Commands.runOnce(this::cycleIdlePattern, this); }
-  public void cycleIdlePattern() { idlePattern = IdlePattern.values()[(idlePattern.ordinal() + 1) % IdlePattern.values().length]; }
-  public Command setIdlePatternCommand(IdlePattern pattern) { return Commands.runOnce(() -> setIdlePattern(pattern), this); }
+    private LEDState currentState =
+        LEDState.IDLE;
 
-  public void setIdlePattern(IdlePattern pattern) {
-    switch (pattern) {
-      case SOLID_RED -> activeColor = Color.kRed;
-      case SOLID_WHITE -> activeColor = Color.kWhite;
-      case SOLID_BLUE -> activeColor = Color.kBlue;
-      default -> {}
-    }
-    idlePattern = pattern;
-    currentMode = LEDMode.IDLE;
-  }
+    private LEDPattern manualPattern =
+        LEDPatterns.rainbow();
 
-  public void setCustomColor(int r, int g, int b) {
-    activeColor = LEDColors.fromRGB(r, g, b);
-    setIdlePattern(IdlePattern.CUSTOM_RGB);
-  }
+    private LEDPattern activePattern =
+        manualPattern;
 
-  private boolean hasCanFault() {
-    var s = RobotController.getCANStatus();
-    boolean newFault = s.transmitErrorCount > lastCanTxErrors || s.receiveErrorCount > lastCanRxErrors || s.busOffCount > lastCanBusOff;
-    lastCanTxErrors = s.transmitErrorCount;
-    lastCanRxErrors = s.receiveErrorCount;
-    lastCanBusOff = s.busOffCount;
-    if (newFault) lastCanFaultTimestamp = Timer.getFPGATimestamp();
-    return lastCanFaultTimestamp > 0 && (Timer.getFPGATimestamp() - lastCanFaultTimestamp) < 1.0;
-  }
+    private boolean aprilTagTracking = false;
 
-  private boolean hasAllianceAprilTagTarget() {
-    var latest = Cameras.TURRET_CAM.camera.getLatestResult();
-    if (!latest.hasTargets()) return false;
-    var alliance = DriverStation.getAlliance();
-    int[] allowed = alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red ? Constants.VisionConstants.RED_HUB_TAGS : Constants.VisionConstants.BLUE_HUB_TAGS;
-    for (var t : latest.getTargets()) for (int id : allowed) if (t.getFiducialId() == id) return true;
-    return false;
-  }
+    private edu.wpi.first.wpilibj.util.Color currentColor =
+        LEDColors.WHITE;
 
-  @Override
-  public void periodic() {
-    double speed = Math.max(0.05, SmartDashboard.getNumber("LED/AnimationSpeed", 1.0));
-    animationOffset += speed;
+    private double animationTime = 0.0;
 
-    if (idlePattern == IdlePattern.CUSTOM_RGB) {
-      int r = (int) SmartDashboard.getNumber("LED/Custom R", 255);
-      int g = (int) SmartDashboard.getNumber("LED/Custom G", 255);
-      int b = (int) SmartDashboard.getNumber("LED/Custom B", 255);
-      activeColor = LEDColors.fromRGB(r, g, b);
+    private int lastCanTxErrors = 0;
+    private int lastCanRxErrors = 0;
+    private int lastCanBusOff = 0;
+
+    private double lastCanFaultTimestamp = -1;
+
+    public LEDSubsystem() {
+
+        led.setLength(buffer.getLength());
+
+        led.setData(buffer);
+
+        led.start();
     }
 
-    if (hasCanFault()) drawCanFault();
-    else if (!DriverStation.isDSAttached()) drawWaitingForRadio();
-    else if (hasAllianceAprilTagTarget()) drawAprilTagTracking();
-    else switch (currentMode) {
-      case INTAKE_ACTIVE -> LEDAnimations.chase(buffer, LEDColors.Palette.ORANGE_RED.color(), animationOffset, 6);
-      case PREFEED_ACTIVE -> LEDAnimations.chase(buffer, LEDColors.Palette.PURPLE.color(), -animationOffset, 8);
-      case APRILTAG_TRACKING -> drawAprilTagTracking();
-      case DISABLED -> drawTeamColors();
-      case CAN_FAULT -> drawCanFault();
-      case WAITING_FOR_RADIO -> drawWaitingForRadio();
-      case IDLE -> drawIdlePattern();
+    @Override
+    public void periodic() {
+
+        animationTime += 0.02 * config.animationSpeed;
+
+        updateState();
+
+        config.brightness =
+            SmartDashboard.getNumber(
+                "LED/Brightness",
+                0.25
+            );
+
+        config.animationSpeed =
+            SmartDashboard.getNumber(
+                "LED/AnimationSpeed",
+                1.0
+            );
+
+        activePattern.render(renderer, animationTime);
+
+        led.setData(buffer);
     }
 
-    applyBrightness();
-    led.setData(buffer);
-  }
+    private void updateState() {
 
-  private void drawIdlePattern() {
-    switch (idlePattern) {
-      case RAINBOW -> LEDAnimations.rainbow(buffer, animationOffset);
-      case SOLID_RED, SOLID_WHITE, SOLID_BLUE, CUSTOM_RGB -> LEDAnimations.fill(buffer, activeColor);
-      case TEAM_COLORS -> drawTeamColors();
-      case BREATHING_WHITE -> LEDAnimations.fill(buffer, LEDColors.scale(activeColor, (Math.sin(Timer.getFPGATimestamp() * 2.5) + 1.0) * 0.5));
-      case CHASE -> LEDAnimations.chase(buffer, activeColor, animationOffset, 6);
-      case KNIGHT_RIDER -> LEDAnimations.knightRider(buffer, activeColor, animationOffset);
-      case STROBE -> LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 20) % 2) == 0 ? activeColor : Color.kBlack);
-      case THEATER_CHASE -> drawTheaterChase();
-      case SPARKLE -> LEDAnimations.sparkle(buffer, activeColor);
-      case FIREWORK -> LEDAnimations.firework(buffer, activeColor, animationOffset);
-      case METEOR_RAIN -> LEDAnimations.meteorRain(buffer, activeColor, animationOffset);
-      case STACKING -> LEDAnimations.stacking(buffer, activeColor, animationOffset);
-      case OCEAN_WAVE -> LEDAnimations.oceanWave(buffer, Timer.getFPGATimestamp());
-      case SUNRISE_SUNSET -> LEDAnimations.sunriseSunset(buffer, Timer.getFPGATimestamp());
+        if (hasCanFault()) {
+
+            currentState = LEDState.CAN_FAULT;
+
+            activePattern =
+                LEDPatterns.canFault();
+
+            return;
+        }
+
+        if (!DriverStation.isDSAttached()) {
+
+            currentState =
+                LEDState.WAITING_FOR_RADIO;
+
+            activePattern =
+                LEDPatterns.breathing(
+                    LEDColors.DODGER_BLUE,
+                    3
+                );
+
+            return;
+        }
+
+        if (DriverStation.isDisabled()) {
+
+            currentState =
+                LEDState.DISABLED;
+
+            activePattern =
+                LEDPatterns.teamColors();
+
+            return;
+        }
+
+        if (aprilTagTracking) {
+
+            currentState =
+                LEDState.APRILTAG_TRACKING;
+
+            activePattern =
+                LEDPatterns.chase(
+                    LEDColors.ORANGE,
+                    6,
+                    20
+                );
+
+            return;
+        }
+
+        if (currentState == LEDState.MANUAL) {
+            return;
+        }
+
+        currentState = LEDState.MANUAL;
+
+        activePattern = manualPattern;
     }
-  }
 
-  private void drawCanFault() { LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 4) % 2) == 0 ? LEDColors.Palette.YELLOW.color() : LEDColors.Palette.GREEN.color()); }
-  private void drawWaitingForRadio() {
-    double pulse = (Math.sin(Timer.getFPGATimestamp() * 3.0) + 1.0) * 0.5;
-    Color water = LEDColors.scale(LEDColors.Palette.DODGER_BLUE.color(), pulse);
-    LEDAnimations.fill(buffer, water);
-  }
-  private void drawAprilTagTracking() {
-    LEDAnimations.fill(buffer, ((int) (Timer.getFPGATimestamp() * 10) % 2) == 0
-        ? LEDColors.Palette.DEEP_SKY_BLUE.color()
-        : LEDColors.Palette.WHITE.color());
-  }
-  private void drawTeamColors() {
-    for (int i = 0; i < buffer.getLength(); i++) {
-      buffer.setLED(i, (i % 2 == 0) ? LEDColors.Palette.RED.color() : LEDColors.Palette.WHITE.color());
+    public void setState(
+        LEDState state,
+        LEDPattern pattern
+    ) {
+
+        currentState = state;
+
+        activePattern = pattern;
     }
-  }
 
-  private void drawTheaterChase() {
-    int shift = ((int) animationOffset) % 3;
-    for (int i = 0; i < buffer.getLength(); i++) buffer.setLED(i, ((i + shift) % 3 == 0) ? activeColor : Color.kBlack);
-  }
+    public void setPattern(LEDPattern pattern) {
 
-  private void applyBrightness() {
-    double brightness = Math.max(0.0, Math.min(1.0, SmartDashboard.getNumber("LED/Brightness", Constants.LED.BRIGHTNESS)));
-    for (int i = 0; i < buffer.getLength(); i++) {
-      Color c = buffer.getLED(i);
-      buffer.setLED(i, new Color(c.red * brightness, c.green * brightness, c.blue * brightness));
+        activePattern = pattern;
     }
-  }
+
+    public LEDConfig getConfig() {
+        return config;
+    }
+
+    private boolean hasCanFault() {
+
+        var s = RobotController.getCANStatus();
+
+        boolean newFault =
+            s.transmitErrorCount > lastCanTxErrors
+            || s.receiveErrorCount > lastCanRxErrors
+            || s.busOffCount > lastCanBusOff;
+
+        lastCanTxErrors = s.transmitErrorCount;
+        lastCanRxErrors = s.receiveErrorCount;
+        lastCanBusOff = s.busOffCount;
+
+        if (newFault) {
+            lastCanFaultTimestamp =
+                Timer.getFPGATimestamp();
+        }
+
+        return lastCanFaultTimestamp > 0
+            && (
+                Timer.getFPGATimestamp()
+                - lastCanFaultTimestamp
+            ) < 1.0;
+    }
+
+    public void setAprilTagTracking(boolean tracking) {
+
+        aprilTagTracking = tracking;
+    }
+
+    public void setCustomColor(
+        int r,
+        int g,
+        int b
+    ) {
+
+        currentColor =
+            LEDColors.fromRGB(r, g, b);
+
+        setSolidPattern();
+    }
+
+    public void setSolidPattern() {
+
+        setPattern(
+            LEDPatterns.solid(currentColor)
+        );
+    }
+
+    public void setBreathingPattern() {
+
+        setPattern(
+            LEDPatterns.breathing(
+                currentColor,
+                3
+            )
+        );
+    }
+
+    public void setChasePattern() {
+
+        setPattern(
+            LEDPatterns.chase(
+                currentColor,
+                config.chaseSegmentLength,
+                20
+            )
+        );
+    }
+
+    public void setKnightRiderPattern() {
+
+        setPattern(
+            LEDPatterns.knightRider(
+                currentColor,
+                20
+            )
+        );
+    }
+
+    public void setMeteorPattern() {
+
+        setPattern(
+            LEDPatterns.meteorRain(
+                currentColor,
+                config.meteorTrailLength,
+                25
+            )
+        );
+    }
+
+    public void setRainbowPattern() {
+
+        setPattern(
+            LEDPatterns.rainbow()
+        );
+    }
+
+    public Command holdPatternCommand(LEDPattern pattern) {
+
+        return Commands.startEnd(
+            () -> setPattern(pattern),
+            () -> setPattern(LEDPatterns.rainbow()),
+            this
+        );
+    }
 }

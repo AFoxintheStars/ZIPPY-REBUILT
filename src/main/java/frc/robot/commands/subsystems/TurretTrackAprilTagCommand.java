@@ -8,7 +8,7 @@ import frc.robot.subsystems.swervedrive.Vision.Cameras;
 import frc.robot.subsystems.turret.HoodSubsystem;
 import frc.robot.subsystems.turret.TurretFlywheelSubsystem;
 import frc.robot.subsystems.turret.TurretRotationSubsystem;
-
+import frc.robot.subsystems.LEDSubsystem;
 import java.util.Optional;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -18,15 +18,18 @@ public class TurretTrackAprilTagCommand extends Command
   private final TurretRotationSubsystem turret;
   private final HoodSubsystem hood;
   private final TurretFlywheelSubsystem flywheel;
+  private final LEDSubsystem leds;
 
   public TurretTrackAprilTagCommand(
       TurretRotationSubsystem turret,
       HoodSubsystem hood,
-      TurretFlywheelSubsystem flywheel)
+      TurretFlywheelSubsystem flywheel,
+      LEDSubsystem leds)
   {
     this.turret = turret;
     this.hood = hood;
     this.flywheel = flywheel;
+    this.leds = leds;
     addRequirements(turret, hood, flywheel);
   }
 
@@ -34,6 +37,8 @@ public class TurretTrackAprilTagCommand extends Command
   public void execute()
   {
     PhotonTrackedTarget target = getBestAllianceTarget();
+
+    leds.setAprilTagTracking(target != null);
 
     if (target == null)
     {

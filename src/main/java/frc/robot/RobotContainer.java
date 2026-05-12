@@ -23,11 +23,13 @@ import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.subsystems.TurretTrackAprilTagCommand;
+import frc.robot.led.LEDColors;
+import frc.robot.led.LEDPattern;
+import frc.robot.led.LEDPatterns;
 import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.LEDSubsystem.IdlePattern;
-import frc.robot.subsystems.LEDSubsystem.LEDMode;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.intake.SliderSubsystem;
 import frc.robot.subsystems.prefeed.PrefeedSubsystem;
@@ -64,7 +66,7 @@ public class RobotContainer
 
   private final LEDSubsystem leds = new LEDSubsystem();
 
-  private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret, hood, flywheel);
+  private final Command turretTrackAprilTag = new TurretTrackAprilTagCommand(turret, hood, flywheel, leds);
 
   private final SendableChooser<Command> autoChooser;
   private final SendableChooser<Pose2d> startingPoseChooser = new SendableChooser<>();
@@ -142,7 +144,7 @@ public class RobotContainer
   {
     configureBindings();
     turret.setDefaultCommand(turretTrackAprilTag);
-    leds.setDefaultCommand(Commands.run(() -> leds.setMode(LEDMode.IDLE), leds));
+    
     DriverStation.silenceJoystickConnectionWarning(true);
 
     autoChooser = AutoBuilder.buildAutoChooser();
@@ -169,7 +171,6 @@ public class RobotContainer
     SmartDashboard.putData("Starting Position", startingPoseChooser);
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
-    configureLEDDashboardControls();
     
     slider.setDefaultCommand(slider.set(0));
 
@@ -179,34 +180,91 @@ public class RobotContainer
         Commands.runOnce(() -> drivebase.zeroGyroWithAlliance())
     );
 
-
-    RobotModeTriggers.disabled().whileTrue(leds.disabledCommand());
+    configureLEDControls();
   }
 
-  private void configureLEDDashboardControls() {
-    SmartDashboard.putData("LED/Solid Red", leds.setIdlePatternCommand(IdlePattern.SOLID_RED));
-    SmartDashboard.putData("LED/Solid Blue", leds.setIdlePatternCommand(IdlePattern.SOLID_BLUE));
-    SmartDashboard.putData("LED/Solid White", leds.setIdlePatternCommand(IdlePattern.SOLID_WHITE));
-    SmartDashboard.putData("LED/Rainbow Cycle", leds.setIdlePatternCommand(IdlePattern.RAINBOW));
-    SmartDashboard.putData("LED/Chase", leds.setIdlePatternCommand(IdlePattern.CHASE));
-    SmartDashboard.putData("LED/Knight Rider", leds.setIdlePatternCommand(IdlePattern.KNIGHT_RIDER));
-    SmartDashboard.putData("LED/Breathing", leds.setIdlePatternCommand(IdlePattern.BREATHING_WHITE));
-    SmartDashboard.putData("LED/Strobe", leds.setIdlePatternCommand(IdlePattern.STROBE));
-    SmartDashboard.putData("LED/Theater Chase", leds.setIdlePatternCommand(IdlePattern.THEATER_CHASE));
-    SmartDashboard.putData("LED/Sparkle", leds.setIdlePatternCommand(IdlePattern.SPARKLE));
+    private void configureLEDControls() {
 
-    SmartDashboard.putNumber("LED/Custom R", 255);
-    SmartDashboard.putNumber("LED/Custom G", 255);
-    SmartDashboard.putNumber("LED/Custom B", 255);
-    SmartDashboard.putData("LED/Apply Custom RGB",
-        Commands.runOnce(() -> leds.setCustomColor(
-            (int) SmartDashboard.getNumber("LED/Custom R", 255),
-            (int) SmartDashboard.getNumber("LED/Custom G", 255),
-            (int) SmartDashboard.getNumber("LED/Custom B", 255))));
+        SmartDashboard.putData(
+            "LED/Breathing",
+            Commands.runOnce(leds::setBreathingPattern)
+        );
 
-    SmartDashboard.putNumber("LED/Brightness", 0.25);
-    SmartDashboard.putNumber("LED/AnimationSpeed", 1.0);
-  }
+        SmartDashboard.putData(
+            "LED/Chase",
+            Commands.runOnce(leds::setChasePattern)
+        );
+
+        SmartDashboard.putData(
+            "LED/Solid",
+            Commands.runOnce(leds::setSolidPattern)
+        );
+
+        SmartDashboard.putData(
+            "LED/Meteor",
+            Commands.runOnce(leds::setMeteorPattern)
+        );
+
+        SmartDashboard.putData(
+            "LED/Rainbow",
+            Commands.runOnce(leds::setRainbowPattern)
+        );
+
+        SmartDashboard.putData(
+            "LED/KnightRider",
+            Commands.runOnce(leds::setKnightRiderPattern)
+        );
+
+        SmartDashboard.putNumber(
+            "LED/Custom R",
+            255
+        );  
+
+        SmartDashboard.putNumber(
+            "LED/Custom G",
+            255
+        );
+
+        SmartDashboard.putNumber(
+            "LED/Custom B",
+            255
+        );
+
+        SmartDashboard.putNumber(
+            "LED/Brightness",
+            0.25
+        );
+
+        SmartDashboard.putNumber(
+            "LED/AnimationSpeed",
+            1.0
+        );
+
+        SmartDashboard.putData(
+            "LED/Apply Custom RGB",
+
+            Commands.runOnce(() ->
+
+                leds.setCustomColor(
+
+                    (int)SmartDashboard.getNumber(
+                        "LED/Custom R",
+                        255
+                    ),
+
+                    (int)SmartDashboard.getNumber(
+                        "LED/Custom G",
+                        255
+                    ),
+
+                    (int)SmartDashboard.getNumber(
+                        "LED/Custom B",
+                        255
+                    )
+                )
+            )
+        );
+    }
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -274,7 +332,14 @@ public class RobotContainer
 
       driverXbox.leftBumper().toggleOnTrue(
           intake.intakeCommand()
-              .alongWith(leds.holdModeCommand(LEDMode.INTAKE_ACTIVE))
+              .alongWith(
+                leds.holdPatternCommand(
+                        LEDPatterns.chase(
+                            LEDColors.ORANGE,
+                            6,
+                            25
+                        )
+                    ))
               .alongWith(RumbleTypes.strongHold(driverXbox))
       );
 
@@ -295,7 +360,15 @@ public class RobotContainer
  
       driverXbox.button(8).toggleOnTrue(
           prefeed.intake()
-              .alongWith(leds.holdModeCommand(LEDMode.PREFEED_ACTIVE))
+              .alongWith(
+                leds.holdPatternCommand(
+                        LEDPatterns.chase(
+                            LEDColors.PURPLE,
+                            8,
+                            -25
+                        )
+                    )
+              )
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
@@ -309,17 +382,8 @@ public class RobotContainer
       driverXbox.b().whileTrue(slider.set(-0.15));
       driverXbox.x().whileTrue(slider.set(0.15));
       
-      driverXbox.povLeft().whileTrue(turret.rotateLeft().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
-      driverXbox.povRight().whileTrue(turret.rotateRight().alongWith(leds.holdModeCommand(LEDMode.APRILTAG_TRACKING)));
-      driverXbox.rightTrigger().onTrue(
-          leds.cycleIdleColorPatternCommand()
-              .alongWith(RumbleTypes.tap(driverXbox))
-      );
-
-      driverXbox.button(10).onTrue(
-          leds.cycleIdlePatternCommand()
-              .alongWith(RumbleTypes.tap(driverXbox))
-      );
+      driverXbox.povLeft().whileTrue(turret.rotateLeft());
+      driverXbox.povRight().whileTrue(turret.rotateRight());
 
       driverXbox.povUp().whileTrue(
           hood.moveUp()
