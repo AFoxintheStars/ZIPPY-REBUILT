@@ -386,12 +386,12 @@ public class RobotContainer
       driverXbox.povRight().whileTrue(turret.rotateRight());
 
       driverXbox.povUp().whileTrue(
-          hood.moveUp()
+          hood.moveServoUp()
               .alongWith(RumbleTypes.softHold(driverXbox))
       );
 
       driverXbox.povDown().whileTrue(
-        hood.moveDown()
+        hood.moveServoDown()
             .alongWith(RumbleTypes.softHold(driverXbox))
       );
 

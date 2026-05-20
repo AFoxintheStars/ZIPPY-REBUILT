@@ -30,7 +30,7 @@ public class TurretTrackAprilTagCommand extends Command
     this.hood = hood;
     this.flywheel = flywheel;
     this.leds = leds;
-    addRequirements(turret, hood, flywheel);
+    addRequirements(turret, flywheel);
   }
 
   @Override
@@ -43,8 +43,7 @@ public class TurretTrackAprilTagCommand extends Command
     if (target == null)
     {
       turret.stop();
-      hood.clearTargetAngle();
-      hood.stop();
+      hood.enableManualOverride();
       SmartDashboard.putBoolean("Turret/TrackingTagFound", false);
       SmartDashboard.putNumber("Turret/TrackingDistanceMeters", -1.0);
       return;
@@ -55,6 +54,7 @@ public class TurretTrackAprilTagCommand extends Command
     SmartDashboard.putNumber("Turret/TrackedTagYawDeg", target.getYaw());
     double distanceMeters = target.getBestCameraToTarget().getTranslation().getNorm();
     SmartDashboard.putNumber("Turret/TrackingDistanceMeters", distanceMeters);
+    hood.disableManualOverride();
     hood.setTargetAngleFromDistance(distanceMeters);
     SmartDashboard.putNumber("Hood/LookupDistanceMeters", distanceMeters);
     SmartDashboard.putNumber("Hood/LookupTargetAngle", hood.getLookupAngle(distanceMeters));

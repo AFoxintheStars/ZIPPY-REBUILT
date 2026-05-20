@@ -113,7 +113,7 @@ public class LEDSubsystem extends SubsystemBase {
                 LEDState.DISABLED;
 
             activePattern =
-                LEDPatterns.teamColors();
+                LEDPatterns.solid(LEDColors.ORANGE_RED);
 
             return;
         }
@@ -125,7 +125,7 @@ public class LEDSubsystem extends SubsystemBase {
 
             activePattern =
                 LEDPatterns.chase(
-                    LEDColors.ORANGE,
+                    LEDColors.GREEN,
                     6,
                     20
                 );

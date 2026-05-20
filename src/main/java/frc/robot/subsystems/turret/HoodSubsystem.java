@@ -29,6 +29,7 @@ public class HoodSubsystem extends SubsystemBase {
         ShooterLookupTable.loadFromDeployCSV("shooter_lookup_table.csv");
     private double zeroOffsetDeg = HoodConstants.ZERO_OFFSET;
     private boolean angleTrackerInitialized = false;
+    private boolean manualOverride = false;
     private double lastRawRotations = 0.0;
     private double continuousRotations = 0.0;
 
@@ -77,8 +78,11 @@ public class HoodSubsystem extends SubsystemBase {
     }
 
     public void setTargetAngle(double angleDeg) {
+        if (manualOverride) {
+            return;
+        }
+
         targetAngle = clampAngle(angleDeg);
-        runClosedLoop();
     }
 
     public void setTargetAngleFromDistance(double distanceMeters) {
@@ -120,6 +124,19 @@ public class HoodSubsystem extends SubsystemBase {
         setSpeed(speedCmd);
     }
 
+    public void enableManualOverride() {
+        manualOverride = true;
+        clearTargetAngle();
+    }
+
+    public void disableManualOverride() {
+        manualOverride = false;
+    }
+
+    public boolean isManualOverrideEnabled() {
+        return manualOverride;
+    }
+
     /* ==================== SENSORS ==================== */
 
     public double getAngle() {
@@ -157,7 +174,10 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command moveServoUp() {
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.UP_SPEED),
+            () -> {
+                enableManualOverride();
+                setSpeed(HoodConstants.UP_SPEED);
+            },
             this::stop,
             this
         );
@@ -165,7 +185,10 @@ public class HoodSubsystem extends SubsystemBase {
 
     public Command moveServoDown() {
         return Commands.startEnd(
-            () -> setSpeed(HoodConstants.DOWN_SPEED),
+            () -> {
+                enableManualOverride();
+                setSpeed(HoodConstants.DOWN_SPEED);
+            },
             this::stop,
             this
         );
@@ -193,6 +216,10 @@ public class HoodSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        if (!manualOverride && !Double.isNaN(targetAngle)) {
+            runClosedLoop();
+        }
+
         double angle = getAngle();
         double error = Double.isNaN(targetAngle) ? 0.0 : (targetAngle - angle);
 
