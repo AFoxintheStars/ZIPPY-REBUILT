@@ -126,7 +126,7 @@ public static final class HoodConstants {
     public static final double DEGREES_PER_ENCODER_ROTATION =
         360.0 * (PINION_TEETH / RACK_EQUIVALENT_TEETH);
 
-    public static final double ZERO_OFFSET = 720.08;
+    public static final double ZERO_OFFSET = 825.35;
     public static final boolean ENCODER_INVERTED = true;
     public static final boolean SERVO_INVERTED = true;
 
